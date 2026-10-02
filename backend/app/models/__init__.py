@@ -3,6 +3,7 @@
 
 from sqlmodel import SQLModel
 
+from app.models.audit_log import AuditLog
 from app.models.common import (
     Message,
     SoftDeleteMixin,
@@ -10,6 +11,7 @@ from app.models.common import (
     get_datetime_utc,
 )
 from app.models.document_reference import DocumentReference, DocumentType
+from app.models.flag import Flag, FlagCategory, FlagStatus
 from app.models.handover import Handover, HandoverStatus
 from app.models.handover_patient import (
     HandoverPatient,
@@ -33,6 +35,7 @@ from app.models.patient import (
     PatientUpdate,
     Sex,
 )
+from app.models.task import DueKind, Task, TaskPriority, TaskStatus
 from app.models.user import (
     NewPassword,
     Token,
@@ -93,4 +96,13 @@ __all__ = [
     "MatchStatus",
     "DocumentReference",
     "DocumentType",
+    # task / flag / audit
+    "Task",
+    "TaskStatus",
+    "TaskPriority",
+    "DueKind",
+    "Flag",
+    "FlagCategory",
+    "FlagStatus",
+    "AuditLog",
 ]
