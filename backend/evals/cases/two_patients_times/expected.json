@@ -1,0 +1,43 @@
+{
+  "recorded_at": "2026-10-02T07:00:00+05:00",
+  "patients": [
+    {
+      "bed": "3",
+      "name": "Mr Raza",
+      "match_status": "matched",
+      "matched_mrn": "MRN-100003",
+      "illness_severity": "unstable",
+      "contingencies": 1,
+      "pending_results": 0,
+      "action_items": [
+        {
+          "due_kind": "relative",
+          "clock_time": null,
+          "meridiem_stated": false,
+          "relative_minutes": 120,
+          "priority": "routine",
+          "due_at": "2026-10-02T04:00:00Z"
+        }
+      ]
+    },
+    {
+      "bed": "10",
+      "name": "Mrs Chaudhry",
+      "match_status": "matched",
+      "matched_mrn": "MRN-100010",
+      "illness_severity": "stable",
+      "contingencies": 0,
+      "pending_results": 0,
+      "action_items": [
+        {
+          "due_kind": "clock",
+          "clock_time": "18:00",
+          "meridiem_stated": true,
+          "relative_minutes": null,
+          "priority": "urgent",
+          "due_at": "2026-10-02T13:00:00Z"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "recorded_at": "2026-10-02T07:00:00+05:00",
+  "patients": [
+    {
+      "bed": "7",
+      "name": null,
+      "match_status": "matched",
+      "matched_mrn": "MRN-100007",
+      "illness_severity": "watcher",
+      "contingencies": 1,
+      "pending_results": 0,
+      "action_items": [
+        {
+          "due_kind": "clock",
+          "clock_time": "08:30",
+          "meridiem_stated": false,
+          "relative_minutes": null,
+          "priority": "routine",
+          "due_at": "2026-10-02T03:30:00Z"
+        }
+      ]
+    },
+    {
+      "bed": null,
+      "name": "Mr Khan",
+      "match_status": "ambiguous",
+      "matched_mrn": null,
+      "illness_severity": "unspecified",
+      "contingencies": 0,
+      "pending_results": 1,
+      "action_items": []
+    }
+  ]
+}
