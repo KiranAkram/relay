@@ -9,6 +9,13 @@ from app.models.common import (
     TimestampMixin,
     get_datetime_utc,
 )
+from app.models.document_reference import DocumentReference, DocumentType
+from app.models.handover import Handover, HandoverStatus
+from app.models.handover_patient import (
+    HandoverPatient,
+    IllnessSeverity,
+    MatchStatus,
+)
 from app.models.item import (
     Item,
     ItemBase,
@@ -78,4 +85,12 @@ __all__ = [
     "PatientsPublic",
     "PatientUpdate",
     "Sex",
+    # handover
+    "Handover",
+    "HandoverStatus",
+    "HandoverPatient",
+    "IllnessSeverity",
+    "MatchStatus",
+    "DocumentReference",
+    "DocumentType",
 ]
