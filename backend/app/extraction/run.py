@@ -1,10 +1,12 @@
-"""Dev CLI: transcript file -> extraction -> resolved due times + census match.
+"""Dev CLI: transcript or audio file -> extraction -> resolved due times + census match.
 
-    uv run python -m app.extraction.run transcript.txt [--recorded-at ISO] [--provider fake|openai]
+    uv run python -m app.extraction.run SOURCE [--recorded-at ISO]
+        [--provider fake|openai] [--stt-provider fake|openai]
 
-No DB: the census is the seed list. Writes one JSON document to stdout.
-`resolve_cards` is also used by `evals/run_evals.py`; it moves into
-pipeline.py in step 4.
+SOURCE is a .txt transcript or an audio file (mp3, m4a, wav, webm, ...), which
+is transcribed first. No DB: the census is the seed list. Writes one JSON
+document to stdout. `resolve_cards` is also used by `evals/run_evals.py`; it
+moves into pipeline.py in step 4.
 """
 
 import argparse
@@ -23,6 +25,7 @@ from app.extraction.schema import HandoverExtraction
 from app.extraction.timing import resolve_due
 from app.models import Patient
 from app.seed.patients import SEED_PATIENTS
+from app.services.stt import AUDIO_SUFFIXES, get_transcriber
 
 
 def census_from_seed() -> list[Patient]:
@@ -82,7 +85,7 @@ def resolve_cards(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("transcript", type=Path)
+    parser.add_argument("source", type=Path, help=".txt transcript or audio file")
     parser.add_argument(
         "--recorded-at",
         type=datetime.fromisoformat,
@@ -90,27 +93,43 @@ def main(argv: list[str] | None = None) -> int:
         help="ISO timestamp of the recording (default: now, UTC)",
     )
     parser.add_argument("--provider", choices=["fake", "openai"], default=None)
+    parser.add_argument("--stt-provider", choices=["fake", "openai"], default=None)
     args = parser.parse_args(argv)
 
     recorded_at: datetime = args.recorded_at or datetime.now(UTC)
     if recorded_at.tzinfo is None:
         recorded_at = recorded_at.replace(tzinfo=settings.hospital_tz)
 
-    active_settings = settings
+    overrides: dict[str, str] = {}
     if args.provider:
-        active_settings = settings.model_copy(update={"LLM_PROVIDER": args.provider})
-    extractor = get_extractor(active_settings)
-    extraction = extractor.extract(args.transcript.read_text())
+        overrides["LLM_PROVIDER"] = args.provider
+    if args.stt_provider:
+        overrides["STT_PROVIDER"] = args.stt_provider
+    active_settings = settings.model_copy(update=overrides) if overrides else settings
 
-    output = {
+    census = census_from_seed()
+    source: Path = args.source
+    output: dict[str, Any] = {
         "provider": active_settings.LLM_PROVIDER,
         "model": active_settings.LLM_MODEL,
         "prompt_version": active_settings.EXTRACTION_PROMPT_VERSION,
         "recorded_at": recorded_at.isoformat(),
-        "patients": resolve_cards(
-            extraction, recorded_at, census_from_seed(), settings.hospital_tz
-        ),
     }
+    if source.suffix.lower() in AUDIO_SUFFIXES:
+        hints = sorted({p.family_name for p in census})
+        transcript = get_transcriber(active_settings).transcribe(
+            source.read_bytes(), source.name, hints
+        )
+        output["stt_provider"] = active_settings.STT_PROVIDER
+        output["stt_model"] = active_settings.STT_MODEL
+    else:
+        transcript = source.read_text()
+    output["transcript"] = transcript
+
+    extraction = get_extractor(active_settings).extract(transcript)
+    output["patients"] = resolve_cards(
+        extraction, recorded_at, census, settings.hospital_tz
+    )
     sys.stdout.write(json.dumps(output, indent=2) + "\n")
     return 0
 

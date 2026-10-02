@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     EXTRACTION_PROMPT_VERSION: str = "v1"
     HOSPITAL_TIMEZONE: str = "Asia/Karachi"
 
+    # Speech-to-text. `fake` returns a canned transcript.
+    STT_PROVIDER: Literal["fake", "openai"] = "fake"
+    STT_MODEL: str = "gpt-transcribe"
+
     @field_validator("HOSPITAL_TIMEZONE")
     @classmethod
     def _known_timezone(cls, value: str) -> str:
@@ -72,8 +76,13 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _require_openai_key(self) -> Self:
-        if self.LLM_PROVIDER == "openai" and not self.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is required when LLM_PROVIDER=openai")
+        if (
+            "openai" in (self.LLM_PROVIDER, self.STT_PROVIDER)
+            and not self.OPENAI_API_KEY
+        ):
+            raise ValueError(
+                "OPENAI_API_KEY is required when LLM_PROVIDER or STT_PROVIDER is openai"
+            )
         return self
 
     @property
