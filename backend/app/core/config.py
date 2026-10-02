@@ -1,5 +1,6 @@
 import warnings
 from typing import Literal, Self
+from zoneinfo import ZoneInfo
 
 from pydantic import (
     EmailStr,
@@ -55,6 +56,29 @@ class Settings(BaseSettings):
         return self
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+
+    # Extraction (LLM). `fake` needs no key and is what CI runs with.
+    LLM_PROVIDER: Literal["fake", "openai"] = "fake"
+    OPENAI_API_KEY: str | None = None
+    LLM_MODEL: str = "gpt-5-nano"
+    EXTRACTION_PROMPT_VERSION: str = "v1"
+    HOSPITAL_TIMEZONE: str = "Asia/Karachi"
+
+    @field_validator("HOSPITAL_TIMEZONE")
+    @classmethod
+    def _known_timezone(cls, value: str) -> str:
+        ZoneInfo(value)  # raises ZoneInfoNotFoundError for an unknown name
+        return value
+
+    @model_validator(mode="after")
+    def _require_openai_key(self) -> Self:
+        if self.LLM_PROVIDER == "openai" and not self.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY is required when LLM_PROVIDER=openai")
+        return self
+
+    @property
+    def hospital_tz(self) -> ZoneInfo:
+        return ZoneInfo(self.HOSPITAL_TIMEZONE)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
