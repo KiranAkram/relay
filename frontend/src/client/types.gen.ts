@@ -5,6 +5,56 @@ export type ClientOptions = {
 };
 
 /**
+ * ActionItemDraft
+ */
+export type ActionItemDraft = {
+    /**
+     * Description
+     */
+    description: string;
+    priority?: TaskPriority;
+    due_kind?: DueKind;
+    /**
+     * Due Phrase
+     */
+    due_phrase?: string | null;
+    /**
+     * Due At
+     */
+    due_at?: string | null;
+    /**
+     * Needs Review
+     */
+    needs_review?: boolean;
+    /**
+     * Review Reason
+     */
+    review_reason?: string | null;
+    /**
+     * Verbatim
+     */
+    verbatim?: string | null;
+};
+
+/**
+ * Body_handovers-upload_handover
+ */
+export type Body_handovers_upload_handover = {
+    /**
+     * File
+     */
+    file: Blob | File;
+    /**
+     * Recorded At
+     */
+    recorded_at: string;
+    /**
+     * Shift Label
+     */
+    shift_label?: string | null;
+};
+
+/**
  * Body_login-login_access_token
  */
 export type Body_login_login_access_token = {
@@ -35,6 +85,127 @@ export type Body_login_login_access_token = {
 };
 
 /**
+ * DashboardPatientPublic
+ */
+export type DashboardPatientPublic = {
+    patient: PatientPublic;
+    /**
+     * Handover Id
+     */
+    handover_id: string;
+    /**
+     * Card Id
+     */
+    card_id: string;
+    /**
+     * Confirmed At
+     */
+    confirmed_at: string;
+    illness_severity: IllnessSeverity;
+    /**
+     * Patient Summary
+     */
+    patient_summary: string | null;
+    /**
+     * Situation Awareness
+     */
+    situation_awareness: string | null;
+    /**
+     * Contingencies
+     */
+    contingencies: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Pending Results
+     */
+    pending_results: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Tasks
+     */
+    tasks: Array<TaskPublic>;
+    /**
+     * Flags
+     */
+    flags: Array<FlagPublic>;
+    /**
+     * Next Due At
+     */
+    next_due_at: string | null;
+};
+
+/**
+ * DashboardPublic
+ */
+export type DashboardPublic = {
+    /**
+     * Generated At
+     */
+    generated_at: string;
+    /**
+     * Patients
+     */
+    patients: Array<DashboardPatientPublic>;
+};
+
+/**
+ * DueKind
+ */
+export type DueKind = 'clock' | 'relative' | 'unspecified';
+
+/**
+ * FlagCategory
+ */
+export type FlagCategory = 'task_due_soon' | 'task_overdue' | 'unstable_patient';
+
+/**
+ * FlagPublic
+ */
+export type FlagPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Patient Id
+     */
+    patient_id: string;
+    /**
+     * Handover Id
+     */
+    handover_id: string;
+    /**
+     * Task Id
+     */
+    task_id: string | null;
+    category: FlagCategory;
+    status: FlagStatus;
+    /**
+     * Fire At
+     */
+    fire_at: string;
+    /**
+     * Fired At
+     */
+    fired_at: string | null;
+    /**
+     * Acknowledged By Id
+     */
+    acknowledged_by_id: string | null;
+    /**
+     * Acknowledged At
+     */
+    acknowledged_at: string | null;
+};
+
+/**
+ * FlagStatus
+ */
+export type FlagStatus = 'active' | 'inactive';
+
+/**
  * HTTPValidationError
  */
 export type HTTPValidationError = {
@@ -43,6 +214,255 @@ export type HTTPValidationError = {
      */
     detail?: Array<ValidationError>;
 };
+
+/**
+ * HandoverDetailPublic
+ */
+export type HandoverDetailPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Author Id
+     */
+    author_id: string;
+    status: HandoverStatus;
+    /**
+     * Recorded At
+     */
+    recorded_at: string;
+    /**
+     * Shift Label
+     */
+    shift_label: string | null;
+    /**
+     * Audio Content Type
+     */
+    audio_content_type: string;
+    /**
+     * Transcript Text
+     */
+    transcript_text: string | null;
+    /**
+     * Attempts
+     */
+    attempts: number;
+    /**
+     * Last Error
+     */
+    last_error: string | null;
+    /**
+     * Confirmed At
+     */
+    confirmed_at: string | null;
+    /**
+     * Confirmed By Id
+     */
+    confirmed_by_id: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Patients
+     */
+    patients: Array<HandoverPatientPublic>;
+};
+
+/**
+ * HandoverPatientPublic
+ */
+export type HandoverPatientPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Handover Id
+     */
+    handover_id: string;
+    /**
+     * Patient Id
+     */
+    patient_id: string | null;
+    /**
+     * Order Index
+     */
+    order_index: number;
+    /**
+     * Mention Verbatim
+     */
+    mention_verbatim: string;
+    match_status: MatchStatus;
+    /**
+     * Match Candidates
+     */
+    match_candidates: Array<MatchCandidatePublic>;
+    illness_severity: IllnessSeverity;
+    /**
+     * Severity Evidence
+     */
+    severity_evidence: string | null;
+    /**
+     * Patient Summary
+     */
+    patient_summary: string | null;
+    /**
+     * Situation Awareness
+     */
+    situation_awareness: string | null;
+    /**
+     * Contingencies
+     */
+    contingencies: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Pending Results
+     */
+    pending_results: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Action Items
+     */
+    action_items: Array<ActionItemDraft>;
+    /**
+     * Transcript Excerpt
+     */
+    transcript_excerpt: string | null;
+    /**
+     * Edited By Doctor
+     */
+    edited_by_doctor: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * HandoverPatientUpdate
+ */
+export type HandoverPatientUpdate = {
+    /**
+     * Patient Id
+     */
+    patient_id?: string | null;
+    illness_severity?: IllnessSeverity | null;
+    /**
+     * Patient Summary
+     */
+    patient_summary?: string | null;
+    /**
+     * Situation Awareness
+     */
+    situation_awareness?: string | null;
+    /**
+     * Contingencies
+     */
+    contingencies?: Array<{
+        [key: string]: unknown;
+    }> | null;
+    /**
+     * Pending Results
+     */
+    pending_results?: Array<{
+        [key: string]: unknown;
+    }> | null;
+    /**
+     * Action Items
+     */
+    action_items?: Array<ActionItemDraft> | null;
+};
+
+/**
+ * HandoverPublic
+ */
+export type HandoverPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Author Id
+     */
+    author_id: string;
+    status: HandoverStatus;
+    /**
+     * Recorded At
+     */
+    recorded_at: string;
+    /**
+     * Shift Label
+     */
+    shift_label: string | null;
+    /**
+     * Audio Content Type
+     */
+    audio_content_type: string;
+    /**
+     * Transcript Text
+     */
+    transcript_text: string | null;
+    /**
+     * Attempts
+     */
+    attempts: number;
+    /**
+     * Last Error
+     */
+    last_error: string | null;
+    /**
+     * Confirmed At
+     */
+    confirmed_at: string | null;
+    /**
+     * Confirmed By Id
+     */
+    confirmed_by_id: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * HandoverStatus
+ */
+export type HandoverStatus = 'uploaded' | 'transcribing' | 'extracting' | 'matching' | 'awaiting_review' | 'confirmed' | 'failed' | 'discarded';
+
+/**
+ * HandoversPublic
+ */
+export type HandoversPublic = {
+    /**
+     * Data
+     */
+    data: Array<HandoverPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * IllnessSeverity
+ */
+export type IllnessSeverity = 'stable' | 'watcher' | 'unstable' | 'unspecified';
 
 /**
  * ItemCreate
@@ -113,6 +533,45 @@ export type ItemsPublic = {
 };
 
 /**
+ * MatchCandidatePublic
+ */
+export type MatchCandidatePublic = {
+    /**
+     * Patient Id
+     */
+    patient_id: string;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Family Name
+     */
+    family_name?: string | null;
+    /**
+     * Given Name
+     */
+    given_name?: string | null;
+    /**
+     * Bed
+     */
+    bed?: string | null;
+    /**
+     * Mrn
+     */
+    mrn?: string | null;
+};
+
+/**
+ * MatchStatus
+ */
+export type MatchStatus = 'matched' | 'ambiguous' | 'unmatched' | 'doctor_resolved';
+
+/**
  * Message
  */
 export type Message = {
@@ -137,6 +596,65 @@ export type NewPassword = {
 };
 
 /**
+ * PatientPublic
+ */
+export type PatientPublic = {
+    /**
+     * Mrn
+     */
+    mrn: string;
+    /**
+     * Family Name
+     */
+    family_name: string;
+    /**
+     * Given Name
+     */
+    given_name: string;
+    /**
+     * Birth Date
+     */
+    birth_date?: string | null;
+    sex?: Sex;
+    /**
+     * Bed
+     */
+    bed?: string | null;
+    /**
+     * Unit
+     */
+    unit?: string | null;
+    /**
+     * Admitting Diagnosis
+     */
+    admitting_diagnosis?: string | null;
+    /**
+     * Attending Name
+     */
+    attending_name?: string | null;
+    /**
+     * Admitted At
+     */
+    admitted_at?: string | null;
+    /**
+     * Active
+     */
+    active?: boolean;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
  * PrivateUserCreate
  */
 export type PrivateUserCreate = {
@@ -157,6 +675,82 @@ export type PrivateUserCreate = {
      */
     is_verified?: boolean;
 };
+
+/**
+ * Sex
+ */
+export type Sex = 'male' | 'female' | 'other' | 'unknown';
+
+/**
+ * TaskPriority
+ */
+export type TaskPriority = 'routine' | 'urgent' | 'stat';
+
+/**
+ * TaskPublic
+ */
+export type TaskPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Handover Patient Id
+     */
+    handover_patient_id: string;
+    /**
+     * Handover Id
+     */
+    handover_id: string;
+    /**
+     * Patient Id
+     */
+    patient_id: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Due At
+     */
+    due_at: string | null;
+    due_kind: DueKind;
+    /**
+     * Due Phrase
+     */
+    due_phrase: string | null;
+    priority: TaskPriority;
+    status: TaskStatus;
+    /**
+     * Verbatim
+     */
+    verbatim: string | null;
+    /**
+     * Acknowledged By Id
+     */
+    acknowledged_by_id: string | null;
+    /**
+     * Acknowledged At
+     */
+    acknowledged_at: string | null;
+    /**
+     * Completed By Id
+     */
+    completed_by_id: string | null;
+    /**
+     * Completed At
+     */
+    completed_at: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * TaskStatus
+ */
+export type TaskStatus = 'requested' | 'accepted' | 'completed' | 'cancelled';
 
 /**
  * Token
@@ -206,6 +800,7 @@ export type UserCreate = {
      * Full Name
      */
     full_name?: string | null;
+    role?: UserRole;
     /**
      * Password
      */
@@ -232,6 +827,7 @@ export type UserPublic = {
      * Full Name
      */
     full_name?: string | null;
+    role?: UserRole;
     /**
      * Id
      */
@@ -261,6 +857,11 @@ export type UserRegister = {
 };
 
 /**
+ * UserRole
+ */
+export type UserRole = 'doctor' | 'admin';
+
+/**
  * UserUpdate
  */
 export type UserUpdate = {
@@ -280,6 +881,7 @@ export type UserUpdate = {
      * Full Name
      */
     full_name?: string | null;
+    role?: UserRole | null;
     /**
      * Password
      */
@@ -920,6 +1522,333 @@ export type itemsUpdateItemResponses = {
 };
 
 export type itemsUpdateItemResponse = itemsUpdateItemResponses[keyof itemsUpdateItemResponses];
+
+export type handoversReadHandoversData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: HandoverStatus | null;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/handovers/';
+};
+
+export type handoversReadHandoversErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversReadHandoversError = handoversReadHandoversErrors[keyof handoversReadHandoversErrors];
+
+export type handoversReadHandoversResponses = {
+    /**
+     * Successful Response
+     */
+    200: HandoversPublic;
+};
+
+export type handoversReadHandoversResponse = handoversReadHandoversResponses[keyof handoversReadHandoversResponses];
+
+export type handoversUploadHandoverData = {
+    body: Body_handovers_upload_handover;
+    path?: never;
+    query?: never;
+    url: '/api/v1/handovers/';
+};
+
+export type handoversUploadHandoverErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversUploadHandoverError = handoversUploadHandoverErrors[keyof handoversUploadHandoverErrors];
+
+export type handoversUploadHandoverResponses = {
+    /**
+     * Successful Response
+     */
+    202: HandoverPublic;
+};
+
+export type handoversUploadHandoverResponse = handoversUploadHandoverResponses[keyof handoversUploadHandoverResponses];
+
+export type handoversDiscardHandoverData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}';
+};
+
+export type handoversDiscardHandoverErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversDiscardHandoverError = handoversDiscardHandoverErrors[keyof handoversDiscardHandoverErrors];
+
+export type handoversDiscardHandoverResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type handoversDiscardHandoverResponse = handoversDiscardHandoverResponses[keyof handoversDiscardHandoverResponses];
+
+export type handoversReadHandoverData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}';
+};
+
+export type handoversReadHandoverErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversReadHandoverError = handoversReadHandoverErrors[keyof handoversReadHandoverErrors];
+
+export type handoversReadHandoverResponses = {
+    /**
+     * Successful Response
+     */
+    200: HandoverDetailPublic;
+};
+
+export type handoversReadHandoverResponse = handoversReadHandoverResponses[keyof handoversReadHandoverResponses];
+
+export type handoversDeleteCardData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+        /**
+         * Card Id
+         */
+        card_id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}/patients/{card_id}';
+};
+
+export type handoversDeleteCardErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversDeleteCardError = handoversDeleteCardErrors[keyof handoversDeleteCardErrors];
+
+export type handoversDeleteCardResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type handoversDeleteCardResponse = handoversDeleteCardResponses[keyof handoversDeleteCardResponses];
+
+export type handoversUpdateCardData = {
+    body: HandoverPatientUpdate;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+        /**
+         * Card Id
+         */
+        card_id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}/patients/{card_id}';
+};
+
+export type handoversUpdateCardErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversUpdateCardError = handoversUpdateCardErrors[keyof handoversUpdateCardErrors];
+
+export type handoversUpdateCardResponses = {
+    /**
+     * Successful Response
+     */
+    200: HandoverPatientPublic;
+};
+
+export type handoversUpdateCardResponse = handoversUpdateCardResponses[keyof handoversUpdateCardResponses];
+
+export type handoversRetryHandoverData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}/retry';
+};
+
+export type handoversRetryHandoverErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversRetryHandoverError = handoversRetryHandoverErrors[keyof handoversRetryHandoverErrors];
+
+export type handoversRetryHandoverResponses = {
+    /**
+     * Successful Response
+     */
+    202: HandoverPublic;
+};
+
+export type handoversRetryHandoverResponse = handoversRetryHandoverResponses[keyof handoversRetryHandoverResponses];
+
+export type handoversConfirmHandoverData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}/confirm';
+};
+
+export type handoversConfirmHandoverErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversConfirmHandoverError = handoversConfirmHandoverErrors[keyof handoversConfirmHandoverErrors];
+
+export type handoversConfirmHandoverResponses = {
+    /**
+     * Successful Response
+     */
+    200: HandoverDetailPublic;
+};
+
+export type handoversConfirmHandoverResponse = handoversConfirmHandoverResponses[keyof handoversConfirmHandoverResponses];
+
+export type dashboardReadDashboardData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/dashboard/';
+};
+
+export type dashboardReadDashboardResponses = {
+    /**
+     * Successful Response
+     */
+    200: DashboardPublic;
+};
+
+export type dashboardReadDashboardResponse = dashboardReadDashboardResponses[keyof dashboardReadDashboardResponses];
+
+export type tasksAcknowledgeTaskData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/tasks/{id}/acknowledge';
+};
+
+export type tasksAcknowledgeTaskErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type tasksAcknowledgeTaskError = tasksAcknowledgeTaskErrors[keyof tasksAcknowledgeTaskErrors];
+
+export type tasksAcknowledgeTaskResponses = {
+    /**
+     * Successful Response
+     */
+    200: TaskPublic;
+};
+
+export type tasksAcknowledgeTaskResponse = tasksAcknowledgeTaskResponses[keyof tasksAcknowledgeTaskResponses];
+
+export type flagsAcknowledgeFlagData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/flags/{id}/acknowledge';
+};
+
+export type flagsAcknowledgeFlagErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type flagsAcknowledgeFlagError = flagsAcknowledgeFlagErrors[keyof flagsAcknowledgeFlagErrors];
+
+export type flagsAcknowledgeFlagResponses = {
+    /**
+     * Successful Response
+     */
+    200: FlagPublic;
+};
+
+export type flagsAcknowledgeFlagResponse = flagsAcknowledgeFlagResponses[keyof flagsAcknowledgeFlagResponses];
 
 export type privateCreateUserData = {
     body: PrivateUserCreate;
