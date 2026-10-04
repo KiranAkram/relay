@@ -89,3 +89,23 @@ class Task(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+
+
+# Properties to return via API
+class TaskPublic(SQLModel):
+    id: uuid.UUID
+    handover_patient_id: uuid.UUID
+    handover_id: uuid.UUID
+    patient_id: uuid.UUID
+    description: str
+    due_at: datetime | None
+    due_kind: DueKind
+    due_phrase: str | None
+    priority: TaskPriority
+    status: TaskStatus
+    verbatim: str | None
+    acknowledged_by_id: uuid.UUID | None
+    acknowledged_at: datetime | None
+    completed_by_id: uuid.UUID | None
+    completed_at: datetime | None
+    created_at: datetime

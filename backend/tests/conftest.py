@@ -1,10 +1,12 @@
 from collections.abc import Generator
+from functools import partial
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlmodel import Session, delete
 
+from app.api.deps import get_job_runner_dep, get_storage_dep
 from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
@@ -18,6 +20,10 @@ from app.models import (
     Task,
     User,
 )
+from app.pipeline import process_handover
+from app.seed.patients import seed_patients
+from app.services.jobs import SyncRunner
+from app.services.storage import LocalDirStorage
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
@@ -60,3 +66,19 @@ def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )
+
+
+@pytest.fixture(scope="module")
+def fake_pipeline(
+    tmp_path_factory: pytest.TempPathFactory, db: Session
+) -> Generator[LocalDirStorage]:
+    """Seed the census; audio goes to a temp dir and the pipeline runs inline."""
+    seed_patients(db)
+    local = LocalDirStorage(tmp_path_factory.mktemp("audio"))
+    app.dependency_overrides[get_storage_dep] = lambda: local
+    app.dependency_overrides[get_job_runner_dep] = lambda: SyncRunner(
+        partial(process_handover, storage=local)
+    )
+    yield local
+    app.dependency_overrides.pop(get_storage_dep)
+    app.dependency_overrides.pop(get_job_runner_dep)
