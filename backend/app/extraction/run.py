@@ -5,8 +5,7 @@
 
 SOURCE is a .txt transcript or an audio file (mp3, m4a, wav, webm, ...), which
 is transcribed first. No DB: the census is the seed list. Writes one JSON
-document to stdout. `resolve_cards` is also used by `evals/run_evals.py`; it
-moves into pipeline.py in step 4.
+document to stdout. `resolve_cards` is also used by `evals/run_evals.py`.
 """
 
 import argparse
@@ -21,8 +20,8 @@ from zoneinfo import ZoneInfo
 from app.core.config import settings
 from app.extraction.extractor import get_extractor
 from app.extraction.matching import match_mention
+from app.extraction.resolve import resolve_action_item
 from app.extraction.schema import HandoverExtraction
-from app.extraction.timing import resolve_due
 from app.models import Patient
 from app.seed.patients import SEED_PATIENTS
 from app.services.stt import AUDIO_SUFFIXES, get_transcriber
@@ -68,14 +67,7 @@ def resolve_cards(
                     ],
                 },
                 "action_items": [
-                    {
-                        "description": item.description,
-                        "priority": item.priority.value,
-                        "due_phrase": item.due.phrase,
-                        **resolve_due(item.due, recorded_at, tz).model_dump(
-                            mode="json"
-                        ),
-                    }
+                    resolve_action_item(item, recorded_at, tz)
                     for item in card.action_items
                 ],
             }

@@ -1,9 +1,10 @@
 """One I-PASS card per patient mentioned in a handover.
 
 Rows are drafts produced by the extraction pipeline and edited by the outgoing
-doctor on the review screen. Action items are not stored here; they become
-`task` rows when the handover is confirmed. `patient_id` stays NULL until the
-mention is matched to the census (by the matcher or by the doctor).
+doctor on the review screen. Draft action items are kept in `action_items`
+(JSONB) and become `task` rows only when the handover is confirmed.
+`patient_id` stays NULL until the mention is matched to the census (by the
+matcher or by the doctor).
 """
 
 import uuid
@@ -70,6 +71,10 @@ class HandoverPatient(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     contingencies: list[dict[str, Any]] = Field(default_factory=list, sa_type=JSONB)
     # [{"description": "troponin trend", "expected_by": "...", "verbatim": "..."}]
     pending_results: list[dict[str, Any]] = Field(default_factory=list, sa_type=JSONB)
+    # Draft tasks with due times already resolved by extraction/resolve.py:
+    # [{"description", "priority", "due_kind", "due_phrase", "due_at",
+    #   "needs_review", "review_reason", "verbatim"}]
+    action_items: list[dict[str, Any]] = Field(default_factory=list, sa_type=JSONB)
     transcript_excerpt: str | None = Field(default=None, sa_type=Text)
 
     # True once the doctor changed anything on the review screen
