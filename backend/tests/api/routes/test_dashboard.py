@@ -49,7 +49,7 @@ def test_dashboard_row_carries_card_tasks_and_flags(
     assert row["handover_id"] == detail["id"]
     assert row["card_id"] == bed_7["id"]
     assert row["illness_severity"] == "watcher"
-    assert row["patient"]["bed"] == "7"
+    assert row["patient"]["bed"] == "CCU-7"
     assert row["patient_summary"] == bed_7["patient_summary"]
     assert row["next_due_at"] == DUE_AT.isoformat().replace("+00:00", "Z")
     assert len(row["tasks"]) >= 1
