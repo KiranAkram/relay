@@ -15,6 +15,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.common import SoftDeleteMixin, TimestampMixin
+from app.models.handover_patient import HandoverPatientPublic
 
 if TYPE_CHECKING:
     from app.models.document_reference import DocumentReference
@@ -80,3 +81,30 @@ class Handover(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     documents: list["DocumentReference"] = Relationship(
         back_populates="handover", cascade_delete=True
     )
+
+
+# Properties to return via API. No storage key and no raw extraction: the
+# doctor reviews the cards, not the LLM output.
+class HandoverPublic(SQLModel):
+    id: uuid.UUID
+    author_id: uuid.UUID
+    status: HandoverStatus
+    recorded_at: datetime
+    shift_label: str | None
+    audio_content_type: str
+    transcript_text: str | None
+    attempts: int
+    last_error: str | None
+    confirmed_at: datetime | None
+    confirmed_by_id: uuid.UUID | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class HandoverDetailPublic(HandoverPublic):
+    patients: list[HandoverPatientPublic]
+
+
+class HandoversPublic(SQLModel):
+    data: list[HandoverPublic]
+    count: int

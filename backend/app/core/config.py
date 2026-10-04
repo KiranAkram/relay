@@ -75,6 +75,8 @@ class Settings(BaseSettings):
     # Where process_handover runs: after the HTTP response in the API process,
     # or inline in the request (tests).
     JOB_RUNNER: Literal["inprocess", "sync"] = "inprocess"
+    # Confirm creates a `task_due_soon` flag this many minutes before a task is due.
+    ALERT_LEAD_MINUTES: int = 15
 
     @field_validator("HOSPITAL_TIMEZONE")
     @classmethod
