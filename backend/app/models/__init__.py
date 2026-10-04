@@ -12,10 +12,20 @@ from app.models.common import (
 )
 from app.models.document_reference import DocumentReference, DocumentType
 from app.models.flag import Flag, FlagCategory, FlagStatus
-from app.models.handover import Handover, HandoverStatus
+from app.models.handover import (
+    Handover,
+    HandoverDetailPublic,
+    HandoverPublic,
+    HandoversPublic,
+    HandoverStatus,
+)
 from app.models.handover_patient import (
+    ActionItemDraft,
     HandoverPatient,
+    HandoverPatientPublic,
+    HandoverPatientUpdate,
     IllnessSeverity,
+    MatchCandidatePublic,
     MatchStatus,
 )
 from app.models.item import (
@@ -90,9 +100,16 @@ __all__ = [
     "Sex",
     # handover
     "Handover",
+    "HandoverDetailPublic",
+    "HandoverPublic",
+    "HandoversPublic",
     "HandoverStatus",
+    "ActionItemDraft",
     "HandoverPatient",
+    "HandoverPatientPublic",
+    "HandoverPatientUpdate",
     "IllnessSeverity",
+    "MatchCandidatePublic",
     "MatchStatus",
     "DocumentReference",
     "DocumentType",

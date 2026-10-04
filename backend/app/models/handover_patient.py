@@ -8,6 +8,7 @@ matcher or by the doctor).
 """
 
 import uuid
+from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
@@ -16,6 +17,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.common import SoftDeleteMixin, TimestampMixin
+from app.models.task import DueKind, TaskPriority
 
 if TYPE_CHECKING:
     from app.models.handover import Handover
@@ -81,3 +83,60 @@ class HandoverPatient(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     edited_by_doctor: bool = False
 
     handover: "Handover" = Relationship(back_populates="patients")
+
+
+# One entry of `match_candidates`, enriched with census details for the review screen.
+class MatchCandidatePublic(SQLModel):
+    patient_id: uuid.UUID
+    reason: str
+    score: float
+    family_name: str | None = None
+    given_name: str | None = None
+    bed: str | None = None
+    mrn: str | None = None
+
+
+# One entry of `action_items` (the dict built by extraction/resolve.py), typed so
+# confirm never has to parse free text.
+class ActionItemDraft(SQLModel):
+    description: str = Field(min_length=1)
+    priority: TaskPriority = TaskPriority.routine
+    due_kind: DueKind = DueKind.unspecified
+    due_phrase: str | None = Field(default=None, max_length=128)
+    due_at: datetime | None = None
+    needs_review: bool = False
+    review_reason: str | None = None
+    verbatim: str | None = None
+
+
+# Properties to return via API
+class HandoverPatientPublic(SQLModel):
+    id: uuid.UUID
+    handover_id: uuid.UUID
+    patient_id: uuid.UUID | None
+    order_index: int
+    mention_verbatim: str
+    match_status: MatchStatus
+    match_candidates: list[MatchCandidatePublic]
+    illness_severity: IllnessSeverity
+    severity_evidence: str | None
+    patient_summary: str | None
+    situation_awareness: str | None
+    contingencies: list[dict[str, Any]]
+    pending_results: list[dict[str, Any]]
+    action_items: list[ActionItemDraft]
+    transcript_excerpt: str | None
+    edited_by_doctor: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+# Properties the doctor may change on the review screen, all optional
+class HandoverPatientUpdate(SQLModel):
+    patient_id: uuid.UUID | None = None
+    illness_severity: IllnessSeverity | None = None
+    patient_summary: str | None = None
+    situation_awareness: str | None = None
+    contingencies: list[dict[str, Any]] | None = None
+    pending_results: list[dict[str, Any]] | None = None
+    action_items: list[ActionItemDraft] | None = None
