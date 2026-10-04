@@ -308,6 +308,9 @@ def confirm_handover(
                 verbatim=draft.verbatim,
             )
             session.add(task)
+            # No Relationship links Task and Flag, so SQLAlchemy won't order the
+            # inserts for us: flush the task before adding flags that reference it.
+            session.flush()
             n_tasks += 1
             if draft.due_at is not None:
                 for category, fire_at in (
