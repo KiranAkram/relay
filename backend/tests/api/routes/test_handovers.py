@@ -1,26 +1,17 @@
 """Handover API against the real database with the Fake providers.
 
 Storage is a per-module temp dir and the job runner is `SyncRunner`, so the
-pipeline finishes inside the upload request.
+pipeline finishes inside the upload request (see `fake_pipeline`).
 """
 
 import uuid
-from collections.abc import Generator
-from datetime import UTC, datetime
-from functools import partial
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from httpx import Response
 from sqlmodel import Session, col, select
 
 from app import crud
-from app.api.deps import get_job_runner_dep, get_storage_dep
-from app.core.config import settings
-from app.main import app
 from app.models import (
-    AuditLog,
     DocumentReference,
     Flag,
     FlagCategory,
@@ -29,33 +20,21 @@ from app.models import (
     Task,
     UserCreate,
 )
-from app.pipeline import process_handover
-from app.seed.patients import seed_patients
-from app.services.jobs import SyncRunner
 from app.services.storage import LocalDirStorage, audio_key
 from app.services.stt import MAX_AUDIO_BYTES
+from tests.utils.handover import (
+    DUE_AT,
+    DUE_SOON_AT,
+    URL,
+    audit_entries,
+    resolve_khan,
+    reviewed,
+    upload,
+)
 from tests.utils.user import user_authentication_headers
 from tests.utils.utils import random_email, random_lower_string
 
-URL = f"{settings.API_V1_STR}/handovers"
-RECORDED_AT = datetime(2026, 10, 2, 2, 0, tzinfo=UTC)  # 07:00 in Asia/Karachi
-DUE_AT = datetime(2026, 10, 2, 3, 30, tzinfo=UTC)  # "by 8:30"
-DUE_SOON_AT = datetime(2026, 10, 2, 3, 15, tzinfo=UTC)
-
-
-@pytest.fixture(scope="module", autouse=True)
-def storage(
-    tmp_path_factory: pytest.TempPathFactory, db: Session
-) -> Generator[LocalDirStorage]:
-    seed_patients(db)
-    local = LocalDirStorage(tmp_path_factory.mktemp("audio"))
-    app.dependency_overrides[get_storage_dep] = lambda: local
-    app.dependency_overrides[get_job_runner_dep] = lambda: SyncRunner(
-        partial(process_handover, storage=local)
-    )
-    yield local
-    app.dependency_overrides.pop(get_storage_dep)
-    app.dependency_overrides.pop(get_job_runner_dep)
+pytestmark = pytest.mark.usefixtures("fake_pipeline")
 
 
 @pytest.fixture(scope="module")
@@ -65,53 +44,6 @@ def other_doctor_token_headers(client: TestClient, db: Session) -> dict[str, str
     return user_authentication_headers(client=client, email=email, password=password)
 
 
-def _upload(
-    client: TestClient,
-    headers: dict[str, str],
-    *,
-    filename: str = "handover.m4a",
-    data: bytes = b"not really audio",
-    recorded_at: str = RECORDED_AT.isoformat(),
-) -> Response:
-    return client.post(
-        f"{URL}/",
-        headers=headers,
-        files={"file": (filename, data, "audio/mp4")},
-        data={"recorded_at": recorded_at, "shift_label": "night"},
-    )
-
-
-def _reviewed(client: TestClient, headers: dict[str, str]) -> dict[str, Any]:
-    """Upload and return the detail: two cards, Bed 7 matched, Khan ambiguous."""
-    handover_id = _upload(client, headers).json()["id"]
-    detail = client.get(f"{URL}/{handover_id}", headers=headers).json()
-    assert detail["status"] == HandoverStatus.awaiting_review
-    assert [c["match_status"] for c in detail["patients"]] == ["matched", "ambiguous"]
-    return detail
-
-
-def _resolve_khan(
-    client: TestClient, headers: dict[str, str], detail: dict[str, Any]
-) -> dict[str, Any]:
-    khan = detail["patients"][1]
-    return client.patch(
-        f"{URL}/{detail['id']}/patients/{khan['id']}",
-        headers=headers,
-        json={"patient_id": khan["match_candidates"][0]["patient_id"]},
-    ).json()
-
-
-def _audit(db: Session, action: str, handover_id: str) -> list[AuditLog]:
-    return list(
-        db.exec(
-            select(AuditLog).where(
-                AuditLog.action == action,
-                AuditLog.handover_id == uuid.UUID(handover_id),
-            )
-        ).all()
-    )
-
-
 # --- upload ------------------------------------------------------------------
 
 
@@ -119,9 +51,9 @@ def test_upload_runs_pipeline_and_stores_audio(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
     db: Session,
-    storage: LocalDirStorage,
+    fake_pipeline: LocalDirStorage,
 ) -> None:
-    response = _upload(client, normal_user_token_headers)
+    response = upload(client, normal_user_token_headers)
     assert response.status_code == 202
     content = response.json()
     assert content["status"] == HandoverStatus.awaiting_review  # SyncRunner
@@ -131,14 +63,16 @@ def test_upload_runs_pipeline_and_stores_audio(
     assert "extraction_raw" not in content
 
     handover_id = uuid.UUID(content["id"])
-    assert storage.get(audio_key(handover_id, "handover.m4a")) == b"not really audio"
+    assert (
+        fake_pipeline.get(audio_key(handover_id, "handover.m4a")) == b"not really audio"
+    )
     (doc,) = db.exec(
         select(DocumentReference).where(DocumentReference.handover_id == handover_id)
     ).all()
     assert doc.type == "audio"
     assert doc.patient_id is None
     assert doc.size_bytes == len(b"not really audio")
-    assert len(_audit(db, "handover.uploaded", content["id"])) == 1
+    assert len(audit_entries(db, "handover.uploaded", content["id"])) == 1
 
     detail = client.get(f"{URL}/{handover_id}", headers=normal_user_token_headers)
     assert detail.status_code == 200
@@ -155,7 +89,7 @@ def test_upload_runs_pipeline_and_stores_audio(
 def test_upload_rejects_unsupported_suffix(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    response = _upload(client, normal_user_token_headers, filename="notes.txt")
+    response = upload(client, normal_user_token_headers, filename="notes.txt")
     assert response.status_code == 400
     assert "Unsupported audio type" in response.json()["detail"]
 
@@ -163,7 +97,7 @@ def test_upload_rejects_unsupported_suffix(
 def test_upload_rejects_oversized_file(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    response = _upload(
+    response = upload(
         client, normal_user_token_headers, data=b"x" * (MAX_AUDIO_BYTES + 1)
     )
     assert response.status_code == 413
@@ -172,7 +106,7 @@ def test_upload_rejects_oversized_file(
 def test_upload_rejects_naive_recorded_at(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    response = _upload(
+    response = upload(
         client, normal_user_token_headers, recorded_at="2026-10-02T07:00:00"
     )
     assert response.status_code == 400
@@ -188,7 +122,7 @@ def test_read_handovers_scoped_to_author_unless_admin(
     other_doctor_token_headers: dict[str, str],
     superuser_token_headers: dict[str, str],
 ) -> None:
-    handover_id = _upload(client, normal_user_token_headers).json()["id"]
+    handover_id = upload(client, normal_user_token_headers).json()["id"]
 
     mine = client.get(f"{URL}/", headers=normal_user_token_headers).json()
     assert handover_id in {h["id"] for h in mine["data"]}
@@ -212,7 +146,7 @@ def test_read_handover_permissions(
     other_doctor_token_headers: dict[str, str],
     superuser_token_headers: dict[str, str],
 ) -> None:
-    handover_id = _upload(client, normal_user_token_headers).json()["id"]
+    handover_id = upload(client, normal_user_token_headers).json()["id"]
     assert (
         client.get(f"{URL}/{handover_id}", headers=other_doctor_token_headers)
     ).status_code == 403
@@ -227,10 +161,10 @@ def test_read_handover_permissions(
 # --- edit / delete cards -----------------------------------------------------
 
 
-def test_update_card_text_and_audit(
+def test_update_card_text_andaudit_entries(
     client: TestClient, normal_user_token_headers: dict[str, str], db: Session
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     bed_7 = detail["patients"][0]
     response = client.patch(
         f"{URL}/{detail['id']}/patients/{bed_7['id']}",
@@ -243,7 +177,7 @@ def test_update_card_text_and_audit(
     assert content["edited_by_doctor"] is True
     assert content["match_status"] == "matched"  # unchanged
 
-    (entry,) = _audit(db, "card.edited", detail["id"])
+    (entry,) = audit_entries(db, "card.edited", detail["id"])
     assert entry.entity_id == uuid.UUID(bed_7["id"])
     assert entry.details["before"] == {"patient_summary": bed_7["patient_summary"]}
     assert entry.details["after"] == {"patient_summary": "Fast AF, rate controlled"}
@@ -252,9 +186,9 @@ def test_update_card_text_and_audit(
 def test_update_card_resolves_patient(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     khan = detail["patients"][1]
-    content = _resolve_khan(client, normal_user_token_headers, detail)
+    content = resolve_khan(client, normal_user_token_headers, detail)
     assert content["match_status"] == "doctor_resolved"
     assert content["patient_id"] == khan["match_candidates"][0]["patient_id"]
 
@@ -270,7 +204,7 @@ def test_update_card_resolves_patient(
 def test_update_card_action_items_are_typed(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     bed_7 = detail["patients"][0]
     items = bed_7["action_items"] + [
         {"description": "Repeat ECG", "priority": "urgent", "verbatim": "repeat ECG"}
@@ -299,7 +233,7 @@ def test_update_card_requires_awaiting_review_and_author(
     normal_user_token_headers: dict[str, str],
     other_doctor_token_headers: dict[str, str],
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     card_url = f"{URL}/{detail['id']}/patients/{detail['patients'][0]['id']}"
     body = {"patient_summary": "x"}
     assert (
@@ -317,7 +251,7 @@ def test_update_card_requires_awaiting_review_and_author(
 def test_delete_card(
     client: TestClient, normal_user_token_headers: dict[str, str], db: Session
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     khan = detail["patients"][1]
     response = client.delete(
         f"{URL}/{detail['id']}/patients/{khan['id']}",
@@ -328,7 +262,7 @@ def test_delete_card(
     assert [c["id"] for c in remaining.json()["patients"]] == [
         detail["patients"][0]["id"]
     ]
-    assert len(_audit(db, "card.deleted", detail["id"])) == 1
+    assert len(audit_entries(db, "card.deleted", detail["id"])) == 1
     assert (
         client.delete(
             f"{URL}/{detail['id']}/patients/{khan['id']}",
@@ -343,7 +277,7 @@ def test_delete_card(
 def test_confirm_refused_while_a_card_is_unresolved(
     client: TestClient, normal_user_token_headers: dict[str, str], db: Session
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     response = client.post(
         f"{URL}/{detail['id']}/confirm", headers=normal_user_token_headers
     )
@@ -365,10 +299,10 @@ def test_confirm_refused_while_a_card_is_unresolved(
 def test_confirm_creates_tasks_flags_and_patient_documents(
     client: TestClient, normal_user_token_headers: dict[str, str], db: Session
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     handover_id = uuid.UUID(detail["id"])
     bed_7 = detail["patients"][0]
-    khan = _resolve_khan(client, normal_user_token_headers, detail)
+    khan = resolve_khan(client, normal_user_token_headers, detail)
     client.patch(
         f"{URL}/{detail['id']}/patients/{bed_7['id']}",
         headers=normal_user_token_headers,
@@ -420,7 +354,7 @@ def test_confirm_creates_tasks_flags_and_patient_documents(
     }
     assert all(d.type == "audio" for d in patient_docs)
 
-    (entry,) = _audit(db, "handover.confirmed", detail["id"])
+    (entry,) = audit_entries(db, "handover.confirmed", detail["id"])
     assert entry.details == {"cards": 2, "tasks": 1, "flags": 3}
 
     again = client.post(
@@ -435,7 +369,7 @@ def test_confirm_creates_tasks_flags_and_patient_documents(
 def test_retry_only_when_failed(
     client: TestClient, normal_user_token_headers: dict[str, str], db: Session
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     response = client.post(
         f"{URL}/{detail['id']}/retry", headers=normal_user_token_headers
     )
@@ -455,25 +389,25 @@ def test_retry_only_when_failed(
     content = response.json()
     assert content["status"] == HandoverStatus.awaiting_review
     assert content["attempts"] == 2
-    assert len(_audit(db, "handover.retried", detail["id"])) == 1
+    assert len(audit_entries(db, "handover.retried", detail["id"])) == 1
 
 
 def test_discard_handover(
     client: TestClient, normal_user_token_headers: dict[str, str], db: Session
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
+    detail = reviewed(client, normal_user_token_headers)
     response = client.delete(f"{URL}/{detail['id']}", headers=normal_user_token_headers)
     assert response.status_code == 200
     after = client.get(f"{URL}/{detail['id']}", headers=normal_user_token_headers)
     assert after.json()["status"] == HandoverStatus.discarded
-    assert len(_audit(db, "handover.discarded", detail["id"])) == 1
+    assert len(audit_entries(db, "handover.discarded", detail["id"])) == 1
 
 
 def test_confirmed_handover_cannot_be_discarded(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    detail = _reviewed(client, normal_user_token_headers)
-    _resolve_khan(client, normal_user_token_headers, detail)
+    detail = reviewed(client, normal_user_token_headers)
+    resolve_khan(client, normal_user_token_headers, detail)
     assert (
         client.post(f"{URL}/{detail['id']}/confirm", headers=normal_user_token_headers)
     ).status_code == 200

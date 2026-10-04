@@ -65,3 +65,17 @@ class Flag(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+
+
+# Properties to return via API
+class FlagPublic(SQLModel):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    handover_id: uuid.UUID
+    task_id: uuid.UUID | None
+    category: FlagCategory
+    status: FlagStatus
+    fire_at: datetime
+    fired_at: datetime | None
+    acknowledged_by_id: uuid.UUID | None
+    acknowledged_at: datetime | None

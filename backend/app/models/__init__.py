@@ -10,8 +10,9 @@ from app.models.common import (
     TimestampMixin,
     get_datetime_utc,
 )
+from app.models.dashboard import DashboardPatientPublic, DashboardPublic
 from app.models.document_reference import DocumentReference, DocumentType
-from app.models.flag import Flag, FlagCategory, FlagStatus
+from app.models.flag import Flag, FlagCategory, FlagPublic, FlagStatus
 from app.models.handover import (
     Handover,
     HandoverDetailPublic,
@@ -45,7 +46,7 @@ from app.models.patient import (
     PatientUpdate,
     Sex,
 )
-from app.models.task import DueKind, Task, TaskPriority, TaskStatus
+from app.models.task import DueKind, Task, TaskPriority, TaskPublic, TaskStatus
 from app.models.user import (
     NewPassword,
     Token,
@@ -115,11 +116,16 @@ __all__ = [
     "DocumentType",
     # task / flag / audit
     "Task",
+    "TaskPublic",
     "TaskStatus",
     "TaskPriority",
     "DueKind",
     "Flag",
     "FlagCategory",
+    "FlagPublic",
     "FlagStatus",
     "AuditLog",
+    # dashboard
+    "DashboardPatientPublic",
+    "DashboardPublic",
 ]
