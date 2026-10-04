@@ -68,6 +68,14 @@ class Settings(BaseSettings):
     STT_PROVIDER: Literal["fake", "openai"] = "fake"
     STT_MODEL: str = "gpt-transcribe"
 
+    # Recordings. `local` keeps files under STORAGE_LOCAL_DIR (relative to the
+    # backend working directory); S3/MinIO arrive with the AWS move.
+    STORAGE_PROVIDER: Literal["local"] = "local"
+    STORAGE_LOCAL_DIR: str = "data"
+    # Where process_handover runs: after the HTTP response in the API process,
+    # or inline in the request (tests).
+    JOB_RUNNER: Literal["inprocess", "sync"] = "inprocess"
+
     @field_validator("HOSPITAL_TIMEZONE")
     @classmethod
     def _known_timezone(cls, value: str) -> str:
