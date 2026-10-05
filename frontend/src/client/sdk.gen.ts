@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { dashboardReadDashboardData, dashboardReadDashboardResponses, flagsAcknowledgeFlagData, flagsAcknowledgeFlagErrors, flagsAcknowledgeFlagResponses, handoversConfirmHandoverData, handoversConfirmHandoverErrors, handoversConfirmHandoverResponses, handoversDeleteCardData, handoversDeleteCardErrors, handoversDeleteCardResponses, handoversDiscardHandoverData, handoversDiscardHandoverErrors, handoversDiscardHandoverResponses, handoversReadHandoverData, handoversReadHandoverErrors, handoversReadHandoverResponses, handoversReadHandoversData, handoversReadHandoversErrors, handoversReadHandoversResponses, handoversRetryHandoverData, handoversRetryHandoverErrors, handoversRetryHandoverResponses, handoversUpdateCardData, handoversUpdateCardErrors, handoversUpdateCardResponses, handoversUploadHandoverData, handoversUploadHandoverErrors, handoversUploadHandoverResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, patientsCreatePatientData, patientsCreatePatientErrors, patientsCreatePatientResponses, patientsDischargePatientData, patientsDischargePatientErrors, patientsDischargePatientResponses, patientsReadPatientData, patientsReadPatientErrors, patientsReadPatientRecordData, patientsReadPatientRecordErrors, patientsReadPatientRecordResponses, patientsReadPatientResponses, patientsReadPatientsData, patientsReadPatientsErrors, patientsReadPatientsResponses, patientsUpdatePatientData, patientsUpdatePatientErrors, patientsUpdatePatientResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, tasksAcknowledgeTaskData, tasksAcknowledgeTaskErrors, tasksAcknowledgeTaskResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
+import type { dashboardReadDashboardData, dashboardReadDashboardResponses, flagsAcknowledgeFlagData, flagsAcknowledgeFlagErrors, flagsAcknowledgeFlagResponses, handoversConfirmHandoverData, handoversConfirmHandoverErrors, handoversConfirmHandoverResponses, handoversDeleteCardData, handoversDeleteCardErrors, handoversDeleteCardResponses, handoversDiscardHandoverData, handoversDiscardHandoverErrors, handoversDiscardHandoverResponses, handoversReadHandoverData, handoversReadHandoverErrors, handoversReadHandoverResponses, handoversReadHandoversData, handoversReadHandoversErrors, handoversReadHandoversResponses, handoversRetryHandoverData, handoversRetryHandoverErrors, handoversRetryHandoverResponses, handoversUpdateCardData, handoversUpdateCardErrors, handoversUpdateCardResponses, handoversUploadHandoverData, handoversUploadHandoverErrors, handoversUploadHandoverResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, patientsCreatePatientData, patientsCreatePatientErrors, patientsCreatePatientResponses, patientsDischargePatientData, patientsDischargePatientErrors, patientsDischargePatientResponses, patientsReadPatientData, patientsReadPatientErrors, patientsReadPatientRecordData, patientsReadPatientRecordErrors, patientsReadPatientRecordResponses, patientsReadPatientResponses, patientsReadPatientsData, patientsReadPatientsErrors, patientsReadPatientsResponses, patientsUpdatePatientData, patientsUpdatePatientErrors, patientsUpdatePatientResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, tasksAcknowledgeTaskData, tasksAcknowledgeTaskErrors, tasksAcknowledgeTaskResponses, tasksCancelTaskData, tasksCancelTaskErrors, tasksCancelTaskResponses, tasksCompleteTaskData, tasksCompleteTaskErrors, tasksCompleteTaskResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -517,6 +517,38 @@ export class TasksService {
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/v1/tasks/{id}/acknowledge',
             ...options
+        });
+    }
+    
+    /**
+     * Complete Task
+     *
+     * Mark a task done. Allowed from requested or accepted.
+     */
+    public static completeTask<ThrowOnError extends boolean = true>(options: Options<tasksCompleteTaskData, ThrowOnError>) {
+        return (options.client ?? client).post<tasksCompleteTaskResponses, tasksCompleteTaskErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/tasks/{id}/complete',
+            ...options
+        });
+    }
+    
+    /**
+     * Cancel Task
+     *
+     * Drop a task with a reason. Allowed from requested or accepted.
+     */
+    public static cancelTask<ThrowOnError extends boolean = true>(options: Options<tasksCancelTaskData, ThrowOnError>) {
+        return (options.client ?? client).post<tasksCancelTaskResponses, tasksCancelTaskErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/tasks/{id}/cancel',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
         });
     }
 }

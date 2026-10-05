@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BellRing,
   Check,
+  CheckCheck,
   CircleDashed,
   Clock,
   FileText,
@@ -30,6 +31,7 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import { cn } from "@/lib/utils"
 import { handleError } from "@/utils"
+import { CancelTaskDialog } from "./CancelTaskDialog"
 import { formatClock, formatCountdown } from "./countdown"
 
 /** Flags whose alert time has passed and nobody has acknowledged yet. */
@@ -48,13 +50,26 @@ function useAcknowledge() {
     onError: handleError.bind(showErrorToast),
     onSettled: settle,
   })
+  const complete = useMutation({
+    mutationFn: (id: string) => TasksService.completeTask({ path: { id } }),
+    onSuccess: () => showSuccessToast("Task completed"),
+    onError: handleError.bind(showErrorToast),
+    onSettled: settle,
+  })
+  const cancel = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      TasksService.cancelTask({ path: { id }, body: { reason } }),
+    onSuccess: () => showSuccessToast("Task cancelled"),
+    onError: handleError.bind(showErrorToast),
+    onSettled: settle,
+  })
   const flag = useMutation({
     mutationFn: (id: string) => FlagsService.acknowledgeFlag({ path: { id } }),
     onSuccess: () => showSuccessToast("Alert acknowledged"),
     onError: handleError.bind(showErrorToast),
     onSettled: settle,
   })
-  return { task, flag }
+  return { task, complete, cancel, flag }
 }
 
 interface PatientCardProps {
@@ -181,7 +196,15 @@ function HandedOverCard({ row, now }: PatientCardProps) {
                 flags={alerts.filter((f) => f.task_id === task.id)}
                 now={now}
                 onAcknowledge={() => ack.task.mutate(task.id)}
-                pending={ack.task.isPending}
+                onComplete={() => ack.complete.mutate(task.id)}
+                onCancel={(reason) =>
+                  ack.cancel.mutate({ id: task.id, reason })
+                }
+                pending={
+                  ack.task.isPending ||
+                  ack.complete.isPending ||
+                  ack.cancel.isPending
+                }
               />
             ))}
           </ul>
@@ -210,10 +233,20 @@ interface TaskRowProps {
   flags: FlagPublic[]
   now: Date
   onAcknowledge: () => void
+  onComplete: () => void
+  onCancel: (reason: string) => void
   pending: boolean
 }
 
-function TaskRow({ task, flags, now, onAcknowledge, pending }: TaskRowProps) {
+function TaskRow({
+  task,
+  flags,
+  now,
+  onAcknowledge,
+  onComplete,
+  onCancel,
+  pending,
+}: TaskRowProps) {
   const countdown = task.due_at ? formatCountdown(task.due_at, now) : null
   const dueSoon = flags.some((f) => f.category === "task_due_soon")
   const overdue = countdown?.overdue ?? false
@@ -252,20 +285,32 @@ function TaskRow({ task, flags, now, onAcknowledge, pending }: TaskRowProps) {
           <span className="text-sm text-muted-foreground">No time given</span>
         )}
       </div>
-      {acknowledged ? (
-        <span className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Check className="size-4" /> Acknowledged
-        </span>
-      ) : (
+      <div className="flex items-center gap-1">
+        {acknowledged ? (
+          <span className="mr-2 flex items-center gap-1 text-sm text-muted-foreground">
+            <Check className="size-4" /> Acknowledged
+          </span>
+        ) : (
+          <Button
+            size="sm"
+            variant={overdue || dueSoon ? "destructive" : "outline"}
+            onClick={onAcknowledge}
+            disabled={pending}
+          >
+            Acknowledge
+          </Button>
+        )}
         <Button
           size="sm"
-          variant={overdue || dueSoon ? "destructive" : "outline"}
-          onClick={onAcknowledge}
+          variant="outline"
+          onClick={onComplete}
           disabled={pending}
         >
-          Acknowledge
+          <CheckCheck />
+          Done
         </Button>
-      )}
+        <CancelTaskDialog task={task} onCancel={onCancel} loading={pending} />
+      </div>
     </li>
   )
 }

@@ -55,7 +55,14 @@ from app.models.patient import (
     Sex,
 )
 from app.models.patient_record import PatientRecordCardPublic, PatientRecordPublic
-from app.models.task import DueKind, Task, TaskPriority, TaskPublic, TaskStatus
+from app.models.task import (
+    DueKind,
+    Task,
+    TaskCancel,
+    TaskPriority,
+    TaskPublic,
+    TaskStatus,
+)
 from app.models.user import (
     NewPassword,
     Token,
@@ -128,6 +135,7 @@ __all__ = [
     "DocumentType",
     # task / flag / audit
     "Task",
+    "TaskCancel",
     "TaskPublic",
     "TaskStatus",
     "TaskPriority",

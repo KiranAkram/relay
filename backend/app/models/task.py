@@ -89,6 +89,8 @@ class Task(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+    # Set only when status is `cancelled`; shown on the patient record.
+    cancel_reason: str | None = Field(default=None, sa_type=Text)
 
 
 # Properties to return via API
@@ -108,4 +110,9 @@ class TaskPublic(SQLModel):
     acknowledged_at: datetime | None
     completed_by_id: uuid.UUID | None
     completed_at: datetime | None
+    cancel_reason: str | None
     created_at: datetime
+
+
+class TaskCancel(SQLModel):
+    reason: str = Field(min_length=3, max_length=500)
