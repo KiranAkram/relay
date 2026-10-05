@@ -890,6 +890,16 @@ export type PrivateUserCreate = {
 export type Sex = 'male' | 'female' | 'other' | 'unknown';
 
 /**
+ * TaskCancel
+ */
+export type TaskCancel = {
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
  * TaskPriority
  */
 export type TaskPriority = 'routine' | 'urgent' | 'stat';
@@ -949,6 +959,10 @@ export type TaskPublic = {
      * Completed At
      */
     completed_at: string | null;
+    /**
+     * Cancel Reason
+     */
+    cancel_reason: string | null;
     /**
      * Created At
      */
@@ -2027,6 +2041,66 @@ export type tasksAcknowledgeTaskResponses = {
 };
 
 export type tasksAcknowledgeTaskResponse = tasksAcknowledgeTaskResponses[keyof tasksAcknowledgeTaskResponses];
+
+export type tasksCompleteTaskData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/tasks/{id}/complete';
+};
+
+export type tasksCompleteTaskErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type tasksCompleteTaskError = tasksCompleteTaskErrors[keyof tasksCompleteTaskErrors];
+
+export type tasksCompleteTaskResponses = {
+    /**
+     * Successful Response
+     */
+    200: TaskPublic;
+};
+
+export type tasksCompleteTaskResponse = tasksCompleteTaskResponses[keyof tasksCompleteTaskResponses];
+
+export type tasksCancelTaskData = {
+    body: TaskCancel;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/tasks/{id}/cancel';
+};
+
+export type tasksCancelTaskErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type tasksCancelTaskError = tasksCancelTaskErrors[keyof tasksCancelTaskErrors];
+
+export type tasksCancelTaskResponses = {
+    /**
+     * Successful Response
+     */
+    200: TaskPublic;
+};
+
+export type tasksCancelTaskResponse = tasksCancelTaskResponses[keyof tasksCancelTaskResponses];
 
 export type flagsAcknowledgeFlagData = {
     body?: never;

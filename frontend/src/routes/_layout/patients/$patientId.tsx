@@ -183,6 +183,11 @@ function HistoryCard({
                       due {when(t.due_at)}
                     </span>
                   )}
+                  {t.cancel_reason && (
+                    <span className="ml-2 italic text-muted-foreground">
+                      — cancelled: {t.cancel_reason}
+                    </span>
+                  )}
                 </span>
                 <Badge variant="outline" className="capitalize">
                   {t.status === "accepted" && <Check />}

@@ -235,3 +235,95 @@ def test_patients_without_a_handover_are_listed_last(
     assert fresh["id"] not in {
         r["patient"]["id"] for r in _rows(client, normal_user_token_headers)
     }
+
+
+def _bed_7_task(
+    client: TestClient, headers: dict[str, str]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    detail = confirmed(client, headers)
+    bed_7 = detail["patients"][0]
+    row = _row(_rows(client, headers), bed_7["patient_id"])
+    (task,) = [t for t in row["tasks"] if t["handover_id"] == detail["id"]]
+    return detail, task
+
+
+def test_complete_task_closes_it_and_its_flags(
+    client: TestClient, normal_user_token_headers: dict[str, str], db: Session
+) -> None:
+    detail, task = _bed_7_task(client, normal_user_token_headers)
+
+    response = client.post(
+        f"{TASKS}/{task['id']}/complete", headers=normal_user_token_headers
+    )
+    assert response.status_code == 200, response.text
+    content = response.json()
+    assert content["status"] == "completed"
+    assert content["completed_at"] is not None
+    assert content["completed_by_id"] is not None
+    assert content["cancel_reason"] is None
+
+    task_flags = db.exec(
+        select(Flag).where(Flag.task_id == uuid.UUID(task["id"]))
+    ).all()
+    assert {f.status for f in task_flags} == {FlagStatus.inactive}
+    (entry,) = audit_entries(db, "task.completed", detail["id"])
+    assert entry.details["flags"] == 2
+
+    row = _row(
+        _rows(client, normal_user_token_headers), detail["patients"][0]["patient_id"]
+    )
+    assert task["id"] not in {t["id"] for t in row["tasks"]}  # off the dashboard
+
+    again = client.post(
+        f"{TASKS}/{task['id']}/complete", headers=normal_user_token_headers
+    )
+    assert again.status_code == 409
+    assert (
+        client.post(
+            f"{TASKS}/{task['id']}/acknowledge", headers=normal_user_token_headers
+        )
+    ).status_code == 409
+
+
+def test_cancel_task_requires_a_reason_and_keeps_it(
+    client: TestClient, normal_user_token_headers: dict[str, str], db: Session
+) -> None:
+    detail, task = _bed_7_task(client, normal_user_token_headers)
+    # Acknowledge first: cancel must work from `accepted` too.
+    assert (
+        client.post(
+            f"{TASKS}/{task['id']}/acknowledge", headers=normal_user_token_headers
+        )
+    ).status_code == 200
+
+    missing = client.post(
+        f"{TASKS}/{task['id']}/cancel", headers=normal_user_token_headers, json={}
+    )
+    assert missing.status_code == 422
+    short = client.post(
+        f"{TASKS}/{task['id']}/cancel",
+        headers=normal_user_token_headers,
+        json={"reason": "no"},
+    )
+    assert short.status_code == 422
+
+    response = client.post(
+        f"{TASKS}/{task['id']}/cancel",
+        headers=normal_user_token_headers,
+        json={"reason": "  Given on the previous shift  "},
+    )
+    assert response.status_code == 200, response.text
+    content = response.json()
+    assert content["status"] == "cancelled"
+    assert content["cancel_reason"] == "Given on the previous shift"
+    (entry,) = audit_entries(db, "task.cancelled", detail["id"])
+    assert entry.details["was"] == "accepted"
+    assert entry.details["reason"] == "Given on the previous shift"
+
+    record = client.get(
+        f"{settings.API_V1_STR}/patients/{detail['patients'][0]['patient_id']}/record",
+        headers=normal_user_token_headers,
+    ).json()
+    (kept,) = [t for t in record["tasks"] if t["id"] == task["id"]]
+    assert kept["status"] == "cancelled"
+    assert kept["cancel_reason"] == "Given on the previous shift"
