@@ -1,14 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { AlertTriangle, BellRing, Check, Clock } from "lucide-react"
+import { Link } from "@tanstack/react-router"
+import { AlertTriangle, BellRing, Check, Clock, FileText } from "lucide-react"
 
 import {
   type DashboardPatientPublic,
   type FlagPublic,
   FlagsService,
-  type IllnessSeverity,
   type TaskPublic,
   TasksService,
 } from "@/client"
+import { SeverityBadge } from "@/components/Common/SeverityBadge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,20 +24,6 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { cn } from "@/lib/utils"
 import { handleError } from "@/utils"
 import { formatClock, formatCountdown } from "./countdown"
-
-const SEVERITY_STYLES: Record<IllnessSeverity, string> = {
-  unstable: "border-transparent bg-red-600 text-white",
-  watcher: "border-transparent bg-amber-500 text-black",
-  stable: "border-transparent bg-emerald-600 text-white",
-  unspecified: "text-muted-foreground",
-}
-
-const SEVERITY_LABELS: Record<IllnessSeverity, string> = {
-  unstable: "Unstable",
-  watcher: "Watcher",
-  stable: "Stable",
-  unspecified: "Severity not stated",
-}
 
 /** Flags whose alert time has passed and nobody has acknowledged yet. */
 const firedFlags = (flags: FlagPublic[]) =>
@@ -96,9 +83,7 @@ export function PatientCard({ row, now }: PatientCardProps) {
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className={SEVERITY_STYLES[row.illness_severity]}>
-              {SEVERITY_LABELS[row.illness_severity]}
-            </Badge>
+            <SeverityBadge severity={row.illness_severity} />
             {unstableAlert && (
               <Button
                 size="sm"
@@ -150,8 +135,14 @@ export function PatientCard({ row, now }: PatientCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="text-xs text-muted-foreground">
-        Handed over at {formatClock(row.confirmed_at)}
+      <CardFooter className="justify-between text-xs text-muted-foreground">
+        <span>Handed over at {formatClock(row.confirmed_at)}</span>
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/patients/$patientId" params={{ patientId: patient.id }}>
+            <FileText />
+            View record
+          </Link>
+        </Button>
       </CardFooter>
     </Card>
   )

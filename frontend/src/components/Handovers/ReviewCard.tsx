@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import { AlertTriangle, Plus, Trash2, UserCheck } from "lucide-react"
 import { useState } from "react"
 
@@ -10,6 +11,7 @@ import {
   type IllnessSeverity,
   type TaskPriority,
 } from "@/client"
+import { CensusPicker } from "@/components/Patients/CensusPicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -141,11 +143,16 @@ export function ReviewCard({ handoverId, card, readOnly }: ReviewCardProps) {
         <CardTitle className="flex flex-wrap items-center gap-2">
           <span>“{card.mention_verbatim}”</span>
           {card.patient_id ? (
-            <Badge variant="outline">
-              <UserCheck />
-              {matched
-                ? `${matched.given_name} ${matched.family_name} · Bed ${matched.bed ?? "?"} · MRN ${matched.mrn}`
-                : "Patient set by you"}
+            <Badge variant="outline" asChild>
+              <Link
+                to="/patients/$patientId"
+                params={{ patientId: card.patient_id }}
+              >
+                <UserCheck />
+                {matched
+                  ? `${matched.given_name} ${matched.family_name} · Bed ${matched.bed ?? "?"} · MRN ${matched.mrn}`
+                  : "Patient set by you · open record"}
+              </Link>
             </Badge>
           ) : (
             <Badge className="border-transparent bg-amber-500 text-black">
@@ -189,10 +196,16 @@ export function ReviewCard({ handoverId, card, readOnly }: ReviewCardProps) {
                 </div>
               </div>
             ) : (
-              <p>
-                Nobody on the census matched this mention. Remove the card, or
-                add the patient to the census and re-run the handover.
-              </p>
+              <div className="flex flex-col gap-2">
+                <p>
+                  Nobody on the census matched this mention. Choose the patient
+                  it belongs to, or remove the card.
+                </p>
+                <CensusPicker
+                  disabled={save.isPending}
+                  onPick={(patientId) => save.mutate({ patient_id: patientId })}
+                />
+              </div>
             )}
           </div>
         )}

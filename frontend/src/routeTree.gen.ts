@@ -21,6 +21,8 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutHandoversIndexRouteImport } from './routes/_layout/handovers/index'
 import { Route as LayoutHandoversHandoverIdRouteImport } from './routes/_layout/handovers/$handoverId'
 import { Route as LayoutHandoversNewRouteImport } from './routes/_layout/handovers/new'
+import { Route as LayoutPatientsIndexRouteImport } from './routes/_layout/patients/index'
+import { Route as LayoutPatientsPatientIdRouteImport } from './routes/_layout/patients/$patientId'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -82,6 +84,16 @@ const LayoutHandoversNewRoute = LayoutHandoversNewRouteImport.update({
   path: '/handovers/new',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutPatientsIndexRoute = LayoutPatientsIndexRouteImport.update({
+  id: '/patients/',
+  path: '/patients/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPatientsPatientIdRoute = LayoutPatientsPatientIdRouteImport.update({
+  id: '/patients/$patientId',
+  path: '/patients/$patientId',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -94,7 +106,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof LayoutSettingsRoute
   '/handovers/$handoverId': typeof LayoutHandoversHandoverIdRoute
   '/handovers/new': typeof LayoutHandoversNewRoute
+  '/patients/$patientId': typeof LayoutPatientsPatientIdRoute
   '/handovers/': typeof LayoutHandoversIndexRoute
+  '/patients/': typeof LayoutPatientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -107,7 +121,9 @@ export interface FileRoutesByTo {
   '/': typeof LayoutIndexRoute
   '/handovers/$handoverId': typeof LayoutHandoversHandoverIdRoute
   '/handovers/new': typeof LayoutHandoversNewRoute
+  '/patients/$patientId': typeof LayoutPatientsPatientIdRoute
   '/handovers': typeof LayoutHandoversIndexRoute
+  '/patients': typeof LayoutPatientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,7 +138,9 @@ export interface FileRoutesById {
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/handovers/$handoverId': typeof LayoutHandoversHandoverIdRoute
   '/_layout/handovers/new': typeof LayoutHandoversNewRoute
+  '/_layout/patients/$patientId': typeof LayoutPatientsPatientIdRoute
   '/_layout/handovers/': typeof LayoutHandoversIndexRoute
+  '/_layout/patients/': typeof LayoutPatientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,7 +155,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/handovers/$handoverId'
     | '/handovers/new'
+    | '/patients/$patientId'
     | '/handovers/'
+    | '/patients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -150,7 +170,9 @@ export interface FileRouteTypes {
     | '/'
     | '/handovers/$handoverId'
     | '/handovers/new'
+    | '/patients/$patientId'
     | '/handovers'
+    | '/patients'
   id:
     | '__root__'
     | '/_layout'
@@ -164,7 +186,9 @@ export interface FileRouteTypes {
     | '/_layout/'
     | '/_layout/handovers/$handoverId'
     | '/_layout/handovers/new'
+    | '/_layout/patients/$patientId'
     | '/_layout/handovers/'
+    | '/_layout/patients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -261,6 +285,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutHandoversNewRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/patients/': {
+      id: '/_layout/patients/'
+      path: '/patients'
+      fullPath: '/patients/'
+      preLoaderRoute: typeof LayoutPatientsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/patients/$patientId': {
+      id: '/_layout/patients/$patientId'
+      path: '/patients/$patientId'
+      fullPath: '/patients/$patientId'
+      preLoaderRoute: typeof LayoutPatientsPatientIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
@@ -271,7 +309,9 @@ interface LayoutRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutHandoversHandoverIdRoute: typeof LayoutHandoversHandoverIdRoute
   LayoutHandoversNewRoute: typeof LayoutHandoversNewRoute
+  LayoutPatientsPatientIdRoute: typeof LayoutPatientsPatientIdRoute
   LayoutHandoversIndexRoute: typeof LayoutHandoversIndexRoute
+  LayoutPatientsIndexRoute: typeof LayoutPatientsIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -281,7 +321,9 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutHandoversHandoverIdRoute: LayoutHandoversHandoverIdRoute,
   LayoutHandoversNewRoute: LayoutHandoversNewRoute,
+  LayoutPatientsPatientIdRoute: LayoutPatientsPatientIdRoute,
   LayoutHandoversIndexRoute: LayoutHandoversIndexRoute,
+  LayoutPatientsIndexRoute: LayoutPatientsIndexRoute,
 }
 
 const LayoutRouteWithChildren =
