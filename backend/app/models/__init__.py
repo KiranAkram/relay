@@ -10,7 +10,11 @@ from app.models.common import (
     TimestampMixin,
     get_datetime_utc,
 )
-from app.models.dashboard import DashboardPatientPublic, DashboardPublic
+from app.models.dashboard import (
+    DashboardHandoverStatus,
+    DashboardPatientPublic,
+    DashboardPublic,
+)
 from app.models.document_reference import (
     DocumentReference,
     DocumentReferencePublic,
@@ -134,6 +138,7 @@ __all__ = [
     "FlagStatus",
     "AuditLog",
     # dashboard
+    "DashboardHandoverStatus",
     "DashboardPatientPublic",
     "DashboardPublic",
 ]

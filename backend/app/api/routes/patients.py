@@ -51,7 +51,7 @@ def read_patients(
     statement = select(Patient).where(col(Patient.deleted_at).is_(None))
     if not include_discharged:
         statement = statement.where(col(Patient.active).is_(True))
-    patients = sorted(session.exec(statement).all(), key=_bed_key)
+    patients = sorted(session.exec(statement).all(), key=bed_key)
     return PatientsPublic(
         data=[PatientPublic.model_validate(p) for p in patients], count=len(patients)
     )
@@ -244,7 +244,7 @@ def _commit_or_409(session: SessionDep) -> None:
         raise HTTPException(status_code=409, detail="MRN is already in use") from None
 
 
-def _bed_key(patient: Patient) -> tuple[Any, ...]:
+def bed_key(patient: Patient) -> tuple[Any, ...]:
     """Natural order: CCU-7 before CCU-10; patients without a bed last."""
     if not patient.bed:
         return (1, [], patient.family_name)

@@ -1,11 +1,15 @@
 """Read model for the incoming doctor's dashboard (no table).
 
-One row per census patient with a confirmed card. Priority is the stated
-illness severity, then the nearest due task — no computed risk score.
+One row per active census patient. Patients with a confirmed card carry it;
+patients nobody handed over are listed too, marked `no_handover`, because a
+patient missing from the list is the failure a handover tool exists to
+prevent. Priority is the stated illness severity, then the nearest due task —
+no computed risk score.
 """
 
 import uuid
 from datetime import datetime
+from enum import StrEnum
 from typing import Any
 
 from sqlmodel import SQLModel
@@ -16,12 +20,19 @@ from app.models.patient import PatientPublic
 from app.models.task import TaskPublic
 
 
+class DashboardHandoverStatus(StrEnum):
+    handed_over = "handed_over"
+    no_handover = "no_handover"
+
+
 class DashboardPatientPublic(SQLModel):
     patient: PatientPublic
-    # Latest confirmed card for this patient
-    handover_id: uuid.UUID
-    card_id: uuid.UUID
-    confirmed_at: datetime
+    handover_status: DashboardHandoverStatus
+    # Latest confirmed card for this patient; None when `no_handover`
+    # Every field is always present so the generated client types are exact.
+    handover_id: uuid.UUID | None
+    card_id: uuid.UUID | None
+    confirmed_at: datetime | None
     illness_severity: IllnessSeverity
     patient_summary: str | None
     situation_awareness: str | None

@@ -85,22 +85,28 @@ export type Body_login_login_access_token = {
 };
 
 /**
+ * DashboardHandoverStatus
+ */
+export type DashboardHandoverStatus = 'handed_over' | 'no_handover';
+
+/**
  * DashboardPatientPublic
  */
 export type DashboardPatientPublic = {
     patient: PatientPublic;
+    handover_status: DashboardHandoverStatus;
     /**
      * Handover Id
      */
-    handover_id: string;
+    handover_id: string | null;
     /**
      * Card Id
      */
-    card_id: string;
+    card_id: string | null;
     /**
      * Confirmed At
      */
-    confirmed_at: string;
+    confirmed_at: string | null;
     illness_severity: IllnessSeverity;
     /**
      * Patient Summary

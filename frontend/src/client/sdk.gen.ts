@@ -492,7 +492,8 @@ export class DashboardService {
     /**
      * Read Dashboard
      *
-     * Census patients with a confirmed card, highest priority first.
+     * Every active census patient, highest priority first; patients with no
+     * confirmed handover come last, marked `no_handover`.
      */
     public static readDashboard<ThrowOnError extends boolean = true>(options?: Options<dashboardReadDashboardData, ThrowOnError>) {
         return (options?.client ?? client).get<dashboardReadDashboardResponses, unknown, ThrowOnError>({

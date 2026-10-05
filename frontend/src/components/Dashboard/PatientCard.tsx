@@ -1,6 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { AlertTriangle, BellRing, Check, Clock, FileText } from "lucide-react"
+import {
+  AlertTriangle,
+  BellRing,
+  Check,
+  CircleDashed,
+  Clock,
+  FileText,
+} from "lucide-react"
 
 import {
   type DashboardPatientPublic,
@@ -56,6 +63,52 @@ interface PatientCardProps {
 }
 
 export function PatientCard({ row, now }: PatientCardProps) {
+  if (row.handover_status === "no_handover") {
+    return <NoHandoverCard row={row} />
+  }
+  return <HandedOverCard row={row} now={now} />
+}
+
+/** A census patient nobody mentioned: shown so the gap is visible, not hidden. */
+function NoHandoverCard({ row }: { row: DashboardPatientPublic }) {
+  const { patient } = row
+  return (
+    <Card className="border-dashed">
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">
+              {patient.bed ? `Bed ${patient.bed}` : "No bed"}
+              <span className="ml-3 font-normal text-muted-foreground">
+                {patient.given_name} {patient.family_name}
+              </span>
+            </CardTitle>
+            <CardDescription className="font-mono text-xs">
+              MRN {patient.mrn}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-muted-foreground">
+              <CircleDashed />
+              No handover this shift
+            </Badge>
+            <Button asChild variant="ghost" size="sm">
+              <Link
+                to="/patients/$patientId"
+                params={{ patientId: patient.id }}
+              >
+                <FileText />
+                View record
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  )
+}
+
+function HandedOverCard({ row, now }: PatientCardProps) {
   const { patient } = row
   const ack = useAcknowledge()
   const alerts = firedFlags(row.flags)
@@ -136,7 +189,11 @@ export function PatientCard({ row, now }: PatientCardProps) {
       </CardContent>
 
       <CardFooter className="justify-between text-xs text-muted-foreground">
-        <span>Handed over at {formatClock(row.confirmed_at)}</span>
+        <span>
+          {row.confirmed_at
+            ? `Handed over at ${formatClock(row.confirmed_at)}`
+            : ""}
+        </span>
         <Button asChild variant="ghost" size="sm">
           <Link to="/patients/$patientId" params={{ patientId: patient.id }}>
             <FileText />
