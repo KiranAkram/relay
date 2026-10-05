@@ -14,7 +14,9 @@ from sqlmodel import col, select
 
 from app import audit
 from app.api.deps import CurrentUser, SessionDep
+from app.api.routes.patients import bed_key
 from app.models import (
+    DashboardHandoverStatus,
     DashboardPatientPublic,
     DashboardPublic,
     Flag,
@@ -46,18 +48,19 @@ FAR_FUTURE = datetime.max.replace(tzinfo=UTC)
 @router.get("/", response_model=DashboardPublic)
 def read_dashboard(session: SessionDep, current_user: CurrentUser) -> Any:
     """
-    Census patients with a confirmed card, highest priority first.
+    Every active census patient, highest priority first; patients with no
+    confirmed handover come last, marked `no_handover`.
     """
     now = datetime.now(UTC)
-    latest = _latest_confirmed_cards(session)
-    if not latest:
+    census = session.exec(
+        select(Patient).where(
+            col(Patient.active).is_(True), col(Patient.deleted_at).is_(None)
+        )
+    ).all()
+    if not census:
         return DashboardPublic(generated_at=now, patients=[])
-    patient_ids = list(latest)
-
-    patients = {
-        p.id: p
-        for p in session.exec(select(Patient).where(col(Patient.id).in_(patient_ids)))
-    }
+    patient_ids = [p.id for p in census]
+    latest = _latest_confirmed_cards(session)
     tasks_by_patient: dict[uuid.UUID, list[Task]] = {pid: [] for pid in patient_ids}
     for task in session.exec(
         select(Task)
@@ -103,13 +106,36 @@ def read_dashboard(session: SessionDep, current_user: CurrentUser) -> Any:
         session.commit()
 
     rows = []
-    for patient_id, (card, handover) in latest.items():
-        tasks = tasks_by_patient[patient_id]
+    for patient in census:
+        tasks = tasks_by_patient[patient.id]
+        flags = [FlagPublic.model_validate(f) for f in flags_by_patient[patient.id]]
         due_times = [t.due_at for t in tasks if t.due_at is not None]
+        public = PatientPublic.model_validate(patient)
+        if patient.id not in latest:
+            rows.append(
+                DashboardPatientPublic(
+                    patient=public,
+                    handover_status=DashboardHandoverStatus.no_handover,
+                    handover_id=None,
+                    card_id=None,
+                    confirmed_at=None,
+                    illness_severity=IllnessSeverity.unspecified,
+                    patient_summary=None,
+                    situation_awareness=None,
+                    contingencies=[],
+                    pending_results=[],
+                    tasks=[TaskPublic.model_validate(t) for t in tasks],
+                    flags=flags,
+                    next_due_at=min(due_times) if due_times else None,
+                )
+            )
+            continue
+        card, handover = latest[patient.id]
         assert handover.confirmed_at is not None  # status is confirmed
         rows.append(
             DashboardPatientPublic(
-                patient=PatientPublic.model_validate(patients[patient_id]),
+                patient=public,
+                handover_status=DashboardHandoverStatus.handed_over,
                 handover_id=handover.id,
                 card_id=card.id,
                 confirmed_at=handover.confirmed_at,
@@ -119,17 +145,17 @@ def read_dashboard(session: SessionDep, current_user: CurrentUser) -> Any:
                 contingencies=card.contingencies,
                 pending_results=card.pending_results,
                 tasks=[TaskPublic.model_validate(t) for t in tasks],
-                flags=[
-                    FlagPublic.model_validate(f) for f in flags_by_patient[patient_id]
-                ],
+                flags=flags,
                 next_due_at=min(due_times) if due_times else None,
             )
         )
+    by_id = {p.id: p for p in census}
     rows.sort(
         key=lambda r: (
+            r.handover_status == DashboardHandoverStatus.no_handover,
             SEVERITY_RANK[r.illness_severity],
             r.next_due_at or FAR_FUTURE,
-            r.patient.bed or "",
+            bed_key(by_id[r.patient.id]),
         )
     )
     return DashboardPublic(generated_at=now, patients=rows)

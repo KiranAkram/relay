@@ -195,3 +195,43 @@ def test_acknowledge_unstable_patient_flag(
         f"{FLAGS}/{uuid.uuid4()}/acknowledge", headers=normal_user_token_headers
     )
     assert missing.status_code == 404
+
+
+def test_patients_without_a_handover_are_listed_last(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    superuser_token_headers: dict[str, str],
+) -> None:
+    confirmed(client, normal_user_token_headers)
+    fresh = client.post(
+        f"{settings.API_V1_STR}/patients/",
+        headers=superuser_token_headers,
+        json={
+            "mrn": f"T-{uuid.uuid4().hex[:8]}",
+            "family_name": "Nobody",
+            "given_name": "Mentioned",
+            "bed": "CCU-96",
+        },
+    ).json()
+
+    rows = _rows(client, normal_user_token_headers)
+    row = _row(rows, fresh["id"])
+    assert row["handover_status"] == "no_handover"
+    assert row["card_id"] is None
+    assert row["handover_id"] is None
+    assert row["illness_severity"] == "unspecified"
+    assert row["tasks"] == []
+
+    statuses = [r["handover_status"] for r in rows]
+    assert "handed_over" in statuses
+    assert statuses.index("no_handover") > statuses.index("handed_over")
+    assert statuses == sorted(statuses, key=lambda s: s == "no_handover")
+    assert all(r["handover_status"] == "handed_over" for r in rows if r["card_id"])
+
+    client.post(
+        f"{settings.API_V1_STR}/patients/{fresh['id']}/discharge",
+        headers=superuser_token_headers,
+    )
+    assert fresh["id"] not in {
+        r["patient"]["id"] for r in _rows(client, normal_user_token_headers)
+    }

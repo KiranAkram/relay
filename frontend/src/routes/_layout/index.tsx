@@ -72,7 +72,8 @@ function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Patients by stated severity, then nearest due task
+            Every patient on the census: by stated severity, then nearest due
+            task. Patients with no handover are listed last.
           </p>
         </div>
         <Button
