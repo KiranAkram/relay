@@ -11,6 +11,7 @@ import {
   type IllnessSeverity,
   type TaskPriority,
 } from "@/client"
+import { ConfirmDialog } from "@/components/Common/ConfirmDialog"
 import { CensusPicker } from "@/components/Patients/CensusPicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -443,18 +444,19 @@ export function ReviewCard({ handoverId, card, readOnly }: ReviewCardProps) {
 
       {!readOnly && (
         <CardFooter className="justify-between">
-          <Button
-            variant="ghost"
-            className="text-destructive"
-            disabled={remove.isPending}
-            onClick={() => {
-              if (window.confirm("Remove this card from the handover?"))
-                remove.mutate()
-            }}
-          >
-            <Trash2 />
-            Remove card
-          </Button>
+          <ConfirmDialog
+            trigger={
+              <Button variant="ghost" className="text-destructive">
+                <Trash2 />
+                Remove card
+              </Button>
+            }
+            title="Remove this card?"
+            description={`“${card.mention_verbatim}” will be dropped from this handover. Nothing is written to any patient record.`}
+            confirmLabel="Remove card"
+            loading={remove.isPending}
+            onConfirm={() => remove.mutate()}
+          />
           <LoadingButton
             disabled={!dirty}
             loading={save.isPending}

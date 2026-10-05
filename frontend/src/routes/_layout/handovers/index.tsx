@@ -5,7 +5,7 @@ import { Suspense } from "react"
 
 import { HandoversService } from "@/client"
 import { StatusBadge } from "@/components/Handovers/StatusBadge"
-import PendingItems from "@/components/Pending/PendingItems"
+import PendingTable from "@/components/Pending/PendingTable"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -106,7 +106,7 @@ function Handovers() {
           </Link>
         </Button>
       </div>
-      <Suspense fallback={<PendingItems />}>
+      <Suspense fallback={<PendingTable />}>
         <HandoversTableContent />
       </Suspense>
     </div>

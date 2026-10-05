@@ -5,6 +5,7 @@ import { AlertTriangle, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 import { type HandoverDetailPublic, HandoversService } from "@/client"
+import { ConfirmDialog } from "@/components/Common/ConfirmDialog"
 import { ReviewCard } from "@/components/Handovers/ReviewCard"
 import { isProcessing, StatusBadge } from "@/components/Handovers/StatusBadge"
 import PendingDashboard from "@/components/Pending/PendingDashboard"
@@ -165,17 +166,18 @@ function HandoverPage() {
 
       {reviewing && (
         <div className="flex items-center justify-between rounded-md border p-4">
-          <Button
-            variant="ghost"
-            className="text-destructive"
-            disabled={discard.isPending}
-            onClick={() => {
-              if (window.confirm("Discard this handover? Nothing is saved."))
-                discard.mutate()
-            }}
-          >
-            Discard handover
-          </Button>
+          <ConfirmDialog
+            trigger={
+              <Button variant="ghost" className="text-destructive">
+                Discard handover
+              </Button>
+            }
+            title="Discard this handover?"
+            description="The recording and draft cards are kept for audit, but nothing reaches a patient record and it cannot be confirmed later."
+            confirmLabel="Discard"
+            loading={discard.isPending}
+            onConfirm={() => discard.mutate()}
+          />
           <LoadingButton
             size="lg"
             loading={confirm.isPending}
