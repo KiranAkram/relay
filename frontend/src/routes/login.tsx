@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import {
   createFileRoute,
   Link as RouterLink,
@@ -7,8 +8,12 @@ import {
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { Body_login_login_access_token as AccessToken } from "@/client"
+import {
+  type Body_login_login_access_token as AccessToken,
+  UtilsService,
+} from "@/client"
 import { AuthLayout } from "@/components/Common/AuthLayout"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -129,14 +134,50 @@ function Login() {
             </LoadingButton>
           </div>
 
-          <div className="text-center text-sm">
-            Don't have an account yet?{" "}
-            <RouterLink to="/signup" className="underline underline-offset-4">
-              Sign up
-            </RouterLink>
-          </div>
+          <DemoAccess
+            onUse={(email, password) => {
+              form.setValue("username", email, { shouldValidate: true })
+              form.setValue("password", password, { shouldValidate: true })
+            }}
+          />
+          <p className="text-center text-xs text-muted-foreground">
+            Accounts are issued by an administrator.
+          </p>
         </form>
       </Form>
     </AuthLayout>
+  )
+}
+
+/** Shown only when the backend has DEMO_ACCESS_BANNER on: demo instances. */
+function DemoAccess({
+  onUse,
+}: {
+  onUse: (email: string, password: string) => void
+}) {
+  const { data } = useQuery({
+    queryKey: ["demo-access"],
+    queryFn: async () => (await UtilsService.demoAccess()).data,
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+  if (!data) return null
+
+  return (
+    <div className="rounded-md border border-dashed p-3 text-sm">
+      <p className="font-medium">Demo access</p>
+      <p className="text-muted-foreground">
+        Try Relay as a doctor with{" "}
+        <span className="font-mono">{data.email}</span>
+      </p>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-2"
+        onClick={() => onUse(data.email, data.password)}
+      >
+        Use demo account
+      </Button>
+    </div>
   )
 }

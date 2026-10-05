@@ -157,6 +157,20 @@ export type DashboardPublic = {
 };
 
 /**
+ * DemoAccess
+ */
+export type DemoAccess = {
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Password
+     */
+    password: string;
+};
+
+/**
  * DocumentReferencePublic
  */
 export type DocumentReferencePublic = {
@@ -1595,6 +1609,24 @@ export type utilsHealthCheckResponses = {
 };
 
 export type utilsHealthCheckResponse = utilsHealthCheckResponses[keyof utilsHealthCheckResponses];
+
+export type utilsDemoAccessData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/utils/demo-access/';
+};
+
+export type utilsDemoAccessResponses = {
+    /**
+     * Response Utils-Demo Access
+     *
+     * Successful Response
+     */
+    200: DemoAccess | null;
+};
+
+export type utilsDemoAccessResponse = utilsDemoAccessResponses[keyof utilsDemoAccessResponses];
 
 export type itemsReadItemsData = {
     body?: never;
