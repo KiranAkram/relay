@@ -111,6 +111,16 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # Accounts are handed out by an admin; self-registration is off unless
+    # explicitly enabled (never for a hospital deployment).
+    USERS_OPEN_REGISTRATION: bool = False
+    # Optional demo doctor account, created at start-up when both are set.
+    # DEMO_ACCESS_BANNER=true shows its login on the sign-in page: demo
+    # instances only, never where real patient data could appear.
+    DEMO_DOCTOR_EMAIL: EmailStr | None = None
+    DEMO_DOCTOR_PASSWORD: str | None = None
+    DEMO_ACCESS_BANNER: bool = False
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
@@ -130,6 +140,7 @@ class Settings(BaseSettings):
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
+        self._check_default_secret("DEMO_DOCTOR_PASSWORD", self.DEMO_DOCTOR_PASSWORD)
 
         return self
 

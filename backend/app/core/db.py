@@ -2,7 +2,7 @@ from sqlmodel import Session, create_engine, select
 
 from app import crud
 from app.core.config import settings
-from app.models import User, UserCreate
+from app.models import User, UserCreate, UserRole
 
 engine = create_engine(str(settings.DATABASE_URL), pool_pre_ping=True)
 
@@ -31,3 +31,18 @@ def init_db(session: Session) -> None:
             is_superuser=True,
         )
         user = crud.create_user(session=session, user_create=user_in)
+
+    if settings.DEMO_DOCTOR_EMAIL and settings.DEMO_DOCTOR_PASSWORD:
+        demo = session.exec(
+            select(User).where(User.email == settings.DEMO_DOCTOR_EMAIL)
+        ).first()
+        if not demo:
+            crud.create_user(
+                session=session,
+                user_create=UserCreate(
+                    email=settings.DEMO_DOCTOR_EMAIL,
+                    password=settings.DEMO_DOCTOR_PASSWORD,
+                    full_name="Demo doctor",
+                    role=UserRole.doctor,
+                ),
+            )
