@@ -54,3 +54,16 @@ class DocumentReference(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     authored_at: datetime = Field(sa_type=DateTime(timezone=True))  # type: ignore
 
     handover: "Handover" = Relationship(back_populates="documents")
+
+
+# Properties to return via API. No storage key: the backend resolves access.
+class DocumentReferencePublic(SQLModel):
+    id: uuid.UUID
+    handover_id: uuid.UUID
+    patient_id: uuid.UUID | None
+    type: DocumentType
+    content_type: str
+    size_bytes: int | None
+    author_id: uuid.UUID
+    authored_at: datetime
+    created_at: datetime

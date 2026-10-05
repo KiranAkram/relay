@@ -5,7 +5,7 @@ due 03:30Z) and Mr Khan (ambiguous between the two seeded Khans).
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -16,9 +16,12 @@ from app.core.config import settings
 from app.models import AuditLog, HandoverStatus
 
 URL = f"{settings.API_V1_STR}/handovers"
-RECORDED_AT = datetime(2026, 10, 2, 2, 0, tzinfo=UTC)  # 07:00 in Asia/Karachi
-DUE_AT = datetime(2026, 10, 2, 3, 30, tzinfo=UTC)  # "by 8:30"
-DUE_SOON_AT = datetime(2026, 10, 2, 3, 15, tzinfo=UTC)
+# The upload route refuses recordings older than a week or in the future, so
+# anchor on today: 07:00 in Asia/Karachi, with "by 8:30" resolving to 03:30Z.
+_TODAY: date = datetime.now(UTC).date()
+RECORDED_AT = datetime.combine(_TODAY, time(2, 0), tzinfo=UTC)
+DUE_AT = datetime.combine(_TODAY, time(3, 30), tzinfo=UTC)
+DUE_SOON_AT = datetime.combine(_TODAY, time(3, 15), tzinfo=UTC)
 
 
 def upload(
