@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { DashboardService } from "@/client"
 import { formatClock } from "@/components/Dashboard/countdown"
 import { PatientCard } from "@/components/Dashboard/PatientCard"
+import { useAlertNotifier } from "@/components/Dashboard/useAlertNotifier"
 import PendingDashboard from "@/components/Pending/PendingDashboard"
 import { Button } from "@/components/ui/button"
 import { useNow } from "@/hooks/useNow"
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_layout/")({
 function DashboardContent() {
   const { data } = useSuspenseQuery(getDashboardQueryOptions())
   const now = useNow()
+  useAlertNotifier(data)
 
   if (data.patients.length === 0) {
     return (

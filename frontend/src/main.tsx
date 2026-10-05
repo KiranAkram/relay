@@ -15,7 +15,9 @@ import "./index.css"
 import { routeTree } from "./routeTree.gen"
 
 client.setConfig({
-  baseURL: import.meta.env.VITE_API_URL ?? "",
+  // The built app is served by the backend, so it calls the API on its own
+  // origin. VITE_API_URL only matters for the separate Vite dev server.
+  baseURL: import.meta.env.DEV ? (import.meta.env.VITE_API_URL ?? "") : "",
   auth: () => localStorage.getItem("access_token") || "",
 })
 
