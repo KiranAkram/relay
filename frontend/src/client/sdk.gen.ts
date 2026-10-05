@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { dashboardReadDashboardData, dashboardReadDashboardResponses, flagsAcknowledgeFlagData, flagsAcknowledgeFlagErrors, flagsAcknowledgeFlagResponses, handoversConfirmHandoverData, handoversConfirmHandoverErrors, handoversConfirmHandoverResponses, handoversDeleteCardData, handoversDeleteCardErrors, handoversDeleteCardResponses, handoversDiscardHandoverData, handoversDiscardHandoverErrors, handoversDiscardHandoverResponses, handoversReadHandoverData, handoversReadHandoverErrors, handoversReadHandoverResponses, handoversReadHandoversData, handoversReadHandoversErrors, handoversReadHandoversResponses, handoversRetryHandoverData, handoversRetryHandoverErrors, handoversRetryHandoverResponses, handoversUpdateCardData, handoversUpdateCardErrors, handoversUpdateCardResponses, handoversUploadHandoverData, handoversUploadHandoverErrors, handoversUploadHandoverResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, tasksAcknowledgeTaskData, tasksAcknowledgeTaskErrors, tasksAcknowledgeTaskResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
+import type { dashboardReadDashboardData, dashboardReadDashboardResponses, flagsAcknowledgeFlagData, flagsAcknowledgeFlagErrors, flagsAcknowledgeFlagResponses, handoversConfirmHandoverData, handoversConfirmHandoverErrors, handoversConfirmHandoverResponses, handoversDeleteCardData, handoversDeleteCardErrors, handoversDeleteCardResponses, handoversDiscardHandoverData, handoversDiscardHandoverErrors, handoversDiscardHandoverResponses, handoversReadHandoverData, handoversReadHandoverErrors, handoversReadHandoverResponses, handoversReadHandoversData, handoversReadHandoversErrors, handoversReadHandoversResponses, handoversRetryHandoverData, handoversRetryHandoverErrors, handoversRetryHandoverResponses, handoversUpdateCardData, handoversUpdateCardErrors, handoversUpdateCardResponses, handoversUploadHandoverData, handoversUploadHandoverErrors, handoversUploadHandoverResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, patientsCreatePatientData, patientsCreatePatientErrors, patientsCreatePatientResponses, patientsDischargePatientData, patientsDischargePatientErrors, patientsDischargePatientResponses, patientsReadPatientData, patientsReadPatientErrors, patientsReadPatientRecordData, patientsReadPatientRecordErrors, patientsReadPatientRecordResponses, patientsReadPatientResponses, patientsReadPatientsData, patientsReadPatientsErrors, patientsReadPatientsResponses, patientsUpdatePatientData, patientsUpdatePatientErrors, patientsUpdatePatientResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, tasksAcknowledgeTaskData, tasksAcknowledgeTaskErrors, tasksAcknowledgeTaskResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -531,6 +531,100 @@ export class FlagsService {
             responseType: 'json',
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/v1/flags/{id}/acknowledge',
+            ...options
+        });
+    }
+}
+
+export class PatientsService {
+    /**
+     * Read Patients
+     *
+     * The census, ordered by bed.
+     */
+    public static readPatients<ThrowOnError extends boolean = true>(options?: Options<patientsReadPatientsData, ThrowOnError>) {
+        return (options?.client ?? client).get<patientsReadPatientsResponses, patientsReadPatientsErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/patients/',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Patient
+     *
+     * Admit a patient to the census (admin).
+     */
+    public static createPatient<ThrowOnError extends boolean = true>(options: Options<patientsCreatePatientData, ThrowOnError>) {
+        return (options.client ?? client).post<patientsCreatePatientResponses, patientsCreatePatientErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/patients/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Read Patient
+     *
+     * Get a patient by ID.
+     */
+    public static readPatient<ThrowOnError extends boolean = true>(options: Options<patientsReadPatientData, ThrowOnError>) {
+        return (options.client ?? client).get<patientsReadPatientResponses, patientsReadPatientErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/patients/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update Patient
+     *
+     * Update census details (admin). Discharge is a separate action.
+     */
+    public static updatePatient<ThrowOnError extends boolean = true>(options: Options<patientsUpdatePatientData, ThrowOnError>) {
+        return (options.client ?? client).patch<patientsUpdatePatientResponses, patientsUpdatePatientErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/patients/{id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Discharge Patient
+     *
+     * Take a patient off the census (admin). The record is kept.
+     */
+    public static dischargePatient<ThrowOnError extends boolean = true>(options: Options<patientsDischargePatientData, ThrowOnError>) {
+        return (options.client ?? client).post<patientsDischargePatientResponses, patientsDischargePatientErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/patients/{id}/discharge',
+            ...options
+        });
+    }
+    
+    /**
+     * Read Patient Record
+     *
+     * Everything confirmed into this patient's record, newest first.
+     */
+    public static readPatientRecord<ThrowOnError extends boolean = true>(options: Options<patientsReadPatientRecordData, ThrowOnError>) {
+        return (options.client ?? client).get<patientsReadPatientRecordResponses, patientsReadPatientRecordErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/patients/{id}/record',
             ...options
         });
     }

@@ -151,6 +151,50 @@ export type DashboardPublic = {
 };
 
 /**
+ * DocumentReferencePublic
+ */
+export type DocumentReferencePublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Handover Id
+     */
+    handover_id: string;
+    /**
+     * Patient Id
+     */
+    patient_id: string | null;
+    type: DocumentType;
+    /**
+     * Content Type
+     */
+    content_type: string;
+    /**
+     * Size Bytes
+     */
+    size_bytes: number | null;
+    /**
+     * Author Id
+     */
+    author_id: string;
+    /**
+     * Authored At
+     */
+    authored_at: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * DocumentType
+ */
+export type DocumentType = 'audio' | 'transcript' | 'extraction_json';
+
+/**
  * DueKind
  */
 export type DueKind = 'clock' | 'relative' | 'unspecified';
@@ -596,6 +640,53 @@ export type NewPassword = {
 };
 
 /**
+ * PatientCreate
+ */
+export type PatientCreate = {
+    /**
+     * Mrn
+     */
+    mrn: string;
+    /**
+     * Family Name
+     */
+    family_name: string;
+    /**
+     * Given Name
+     */
+    given_name: string;
+    /**
+     * Birth Date
+     */
+    birth_date?: string | null;
+    sex?: Sex;
+    /**
+     * Bed
+     */
+    bed?: string | null;
+    /**
+     * Unit
+     */
+    unit?: string | null;
+    /**
+     * Admitting Diagnosis
+     */
+    admitting_diagnosis?: string | null;
+    /**
+     * Attending Name
+     */
+    attending_name?: string | null;
+    /**
+     * Admitted At
+     */
+    admitted_at?: string | null;
+    /**
+     * Active
+     */
+    active?: boolean;
+};
+
+/**
  * PatientPublic
  */
 export type PatientPublic = {
@@ -652,6 +743,117 @@ export type PatientPublic = {
      * Updated At
      */
     updated_at: string;
+};
+
+/**
+ * PatientRecordCardPublic
+ */
+export type PatientRecordCardPublic = {
+    card: HandoverPatientPublic;
+    /**
+     * Handover Id
+     */
+    handover_id: string;
+    /**
+     * Author Id
+     */
+    author_id: string;
+    /**
+     * Recorded At
+     */
+    recorded_at: string;
+    /**
+     * Confirmed At
+     */
+    confirmed_at: string;
+    /**
+     * Shift Label
+     */
+    shift_label: string | null;
+};
+
+/**
+ * PatientRecordPublic
+ */
+export type PatientRecordPublic = {
+    patient: PatientPublic;
+    /**
+     * Cards
+     */
+    cards: Array<PatientRecordCardPublic>;
+    /**
+     * Tasks
+     */
+    tasks: Array<TaskPublic>;
+    /**
+     * Flags
+     */
+    flags: Array<FlagPublic>;
+    /**
+     * Documents
+     */
+    documents: Array<DocumentReferencePublic>;
+};
+
+/**
+ * PatientUpdate
+ */
+export type PatientUpdate = {
+    /**
+     * Mrn
+     */
+    mrn?: string | null;
+    /**
+     * Family Name
+     */
+    family_name?: string | null;
+    /**
+     * Given Name
+     */
+    given_name?: string | null;
+    /**
+     * Birth Date
+     */
+    birth_date?: string | null;
+    sex?: Sex | null;
+    /**
+     * Bed
+     */
+    bed?: string | null;
+    /**
+     * Unit
+     */
+    unit?: string | null;
+    /**
+     * Admitting Diagnosis
+     */
+    admitting_diagnosis?: string | null;
+    /**
+     * Attending Name
+     */
+    attending_name?: string | null;
+    /**
+     * Admitted At
+     */
+    admitted_at?: string | null;
+    /**
+     * Active
+     */
+    active?: boolean | null;
+};
+
+/**
+ * PatientsPublic
+ */
+export type PatientsPublic = {
+    /**
+     * Data
+     */
+    data: Array<PatientPublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -1849,6 +2051,181 @@ export type flagsAcknowledgeFlagResponses = {
 };
 
 export type flagsAcknowledgeFlagResponse = flagsAcknowledgeFlagResponses[keyof flagsAcknowledgeFlagResponses];
+
+export type patientsReadPatientsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Include Discharged
+         */
+        include_discharged?: boolean;
+    };
+    url: '/api/v1/patients/';
+};
+
+export type patientsReadPatientsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type patientsReadPatientsError = patientsReadPatientsErrors[keyof patientsReadPatientsErrors];
+
+export type patientsReadPatientsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PatientsPublic;
+};
+
+export type patientsReadPatientsResponse = patientsReadPatientsResponses[keyof patientsReadPatientsResponses];
+
+export type patientsCreatePatientData = {
+    body: PatientCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/patients/';
+};
+
+export type patientsCreatePatientErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type patientsCreatePatientError = patientsCreatePatientErrors[keyof patientsCreatePatientErrors];
+
+export type patientsCreatePatientResponses = {
+    /**
+     * Successful Response
+     */
+    200: PatientPublic;
+};
+
+export type patientsCreatePatientResponse = patientsCreatePatientResponses[keyof patientsCreatePatientResponses];
+
+export type patientsReadPatientData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/patients/{id}';
+};
+
+export type patientsReadPatientErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type patientsReadPatientError = patientsReadPatientErrors[keyof patientsReadPatientErrors];
+
+export type patientsReadPatientResponses = {
+    /**
+     * Successful Response
+     */
+    200: PatientPublic;
+};
+
+export type patientsReadPatientResponse = patientsReadPatientResponses[keyof patientsReadPatientResponses];
+
+export type patientsUpdatePatientData = {
+    body: PatientUpdate;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/patients/{id}';
+};
+
+export type patientsUpdatePatientErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type patientsUpdatePatientError = patientsUpdatePatientErrors[keyof patientsUpdatePatientErrors];
+
+export type patientsUpdatePatientResponses = {
+    /**
+     * Successful Response
+     */
+    200: PatientPublic;
+};
+
+export type patientsUpdatePatientResponse = patientsUpdatePatientResponses[keyof patientsUpdatePatientResponses];
+
+export type patientsDischargePatientData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/patients/{id}/discharge';
+};
+
+export type patientsDischargePatientErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type patientsDischargePatientError = patientsDischargePatientErrors[keyof patientsDischargePatientErrors];
+
+export type patientsDischargePatientResponses = {
+    /**
+     * Successful Response
+     */
+    200: PatientPublic;
+};
+
+export type patientsDischargePatientResponse = patientsDischargePatientResponses[keyof patientsDischargePatientResponses];
+
+export type patientsReadPatientRecordData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/patients/{id}/record';
+};
+
+export type patientsReadPatientRecordErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type patientsReadPatientRecordError = patientsReadPatientRecordErrors[keyof patientsReadPatientRecordErrors];
+
+export type patientsReadPatientRecordResponses = {
+    /**
+     * Successful Response
+     */
+    200: PatientRecordPublic;
+};
+
+export type patientsReadPatientRecordResponse = patientsReadPatientRecordResponses[keyof patientsReadPatientRecordResponses];
 
 export type privateCreateUserData = {
     body: PrivateUserCreate;
