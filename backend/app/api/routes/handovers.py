@@ -15,7 +15,7 @@ from fastapi import APIRouter, Form, HTTPException, UploadFile
 from sqlmodel import col, func, select
 
 from app import audit
-from app.api.deps import CurrentUser, JobRunnerDep, SessionDep, StorageDep
+from app.api.deps import CurrentUser, JobRunnerDep, SessionDep, StorageDep, is_admin
 from app.core.config import settings
 from app.models import (
     ActionItemDraft,
@@ -37,7 +37,6 @@ from app.models import (
     Patient,
     Task,
     User,
-    UserRole,
 )
 from app.services.storage import audio_key
 from app.services.stt import AUDIO_SUFFIXES, MAX_AUDIO_BYTES
@@ -45,6 +44,10 @@ from app.services.stt import AUDIO_SUFFIXES, MAX_AUDIO_BYTES
 router = APIRouter(prefix="/handovers", tags=["handovers"])
 
 UNRESOLVED = (MatchStatus.ambiguous, MatchStatus.unmatched)
+# Due times are computed from `recorded_at`; a wrong device clock would silently
+# shift every alert, so refuse timestamps that cannot be a real end-of-shift.
+RECORDED_AT_MAX_FUTURE = timedelta(hours=24)
+RECORDED_AT_MAX_PAST = timedelta(days=7)
 
 
 @router.post("/", status_code=202, response_model=HandoverPublic)
@@ -72,6 +75,16 @@ def upload_handover(
     if recorded_at.tzinfo is None:
         raise HTTPException(
             status_code=400, detail="recorded_at must include a timezone offset"
+        )
+    now = datetime.now(UTC)
+    if recorded_at > now + RECORDED_AT_MAX_FUTURE:
+        raise HTTPException(
+            status_code=400, detail="recorded_at is in the future; check the clock"
+        )
+    if recorded_at < now - RECORDED_AT_MAX_PAST:
+        raise HTTPException(
+            status_code=400,
+            detail=f"recorded_at is more than {RECORDED_AT_MAX_PAST.days} days ago",
         )
     data = file.file.read(MAX_AUDIO_BYTES + 1)
     if len(data) > MAX_AUDIO_BYTES:
@@ -132,7 +145,7 @@ def read_handovers(
     List the caller's handovers (admins: everyone's), newest first.
     """
     statement = select(Handover).where(col(Handover.deleted_at).is_(None))
-    if not _is_admin(current_user):
+    if not is_admin(current_user):
         statement = statement.where(Handover.author_id == current_user.id)
     if status is not None:
         statement = statement.where(Handover.status == status)
@@ -265,7 +278,7 @@ def confirm_handover(
     Confirm the reviewed cards: create tasks, flags and patient document
     references in one transaction. Refused while any card is unresolved.
     """
-    handover = _get_handover(session, current_user, id)
+    handover = _get_handover(session, current_user, id, lock=True)
     _require_status(handover, HandoverStatus.awaiting_review)
     cards = _live_cards(session, handover)
     unresolved = [
@@ -398,15 +411,20 @@ def discard_handover(
 # --- helpers ---------------------------------------------------------------
 
 
-def _is_admin(user: User) -> bool:
-    return user.role == UserRole.admin or user.is_superuser
-
-
-def _get_handover(session: SessionDep, user: User, id: uuid.UUID) -> Handover:
-    handover = session.get(Handover, id)
+def _get_handover(
+    session: SessionDep, user: User, id: uuid.UUID, *, lock: bool = False
+) -> Handover:
+    """Load a handover the user may act on. `lock=True` takes a row lock
+    (SELECT ... FOR UPDATE) so two requests cannot both pass a status check."""
+    if lock:
+        handover = session.exec(
+            select(Handover).where(Handover.id == id).with_for_update()
+        ).first()
+    else:
+        handover = session.get(Handover, id)
     if handover is None or handover.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Handover not found")
-    if not _is_admin(user) and handover.author_id != user.id:
+    if not is_admin(user) and handover.author_id != user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return handover
 

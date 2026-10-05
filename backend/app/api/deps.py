@@ -11,7 +11,7 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, User
+from app.models import TokenPayload, User, UserRole
 from app.services.jobs import JobRunner, get_job_runner
 from app.services.storage import Storage, get_storage
 
@@ -49,6 +49,20 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def is_admin(user: User) -> bool:
+    """Relay admin: `role=admin`, or the template superuser account."""
+    return user.role == UserRole.admin or user.is_superuser
+
+
+def get_current_admin(current_user: CurrentUser) -> User:
+    if not is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return current_user
+
+
+AdminUser = Annotated[User, Depends(get_current_admin)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:

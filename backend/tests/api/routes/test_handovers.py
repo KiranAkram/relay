@@ -5,6 +5,7 @@ pipeline finishes inside the upload request (see `fake_pipeline`).
 """
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -111,6 +112,20 @@ def test_upload_rejects_naive_recorded_at(
     )
     assert response.status_code == 400
     assert "timezone" in response.json()["detail"]
+
+
+def test_upload_rejects_implausible_recorded_at(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+) -> None:
+    future = (datetime.now(UTC) + timedelta(days=2)).isoformat()
+    response = upload(client, normal_user_token_headers, recorded_at=future)
+    assert response.status_code == 400
+    assert "future" in response.json()["detail"]
+
+    stale = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+    response = upload(client, normal_user_token_headers, recorded_at=stale)
+    assert response.status_code == 400
+    assert "days ago" in response.json()["detail"]
 
 
 # --- list / read -------------------------------------------------------------

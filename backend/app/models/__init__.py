@@ -11,7 +11,11 @@ from app.models.common import (
     get_datetime_utc,
 )
 from app.models.dashboard import DashboardPatientPublic, DashboardPublic
-from app.models.document_reference import DocumentReference, DocumentType
+from app.models.document_reference import (
+    DocumentReference,
+    DocumentReferencePublic,
+    DocumentType,
+)
 from app.models.flag import Flag, FlagCategory, FlagPublic, FlagStatus
 from app.models.handover import (
     Handover,
@@ -46,6 +50,7 @@ from app.models.patient import (
     PatientUpdate,
     Sex,
 )
+from app.models.patient_record import PatientRecordCardPublic, PatientRecordPublic
 from app.models.task import DueKind, Task, TaskPriority, TaskPublic, TaskStatus
 from app.models.user import (
     NewPassword,
@@ -98,6 +103,8 @@ __all__ = [
     "PatientPublic",
     "PatientsPublic",
     "PatientUpdate",
+    "PatientRecordCardPublic",
+    "PatientRecordPublic",
     "Sex",
     # handover
     "Handover",
@@ -113,6 +120,7 @@ __all__ = [
     "MatchCandidatePublic",
     "MatchStatus",
     "DocumentReference",
+    "DocumentReferencePublic",
     "DocumentType",
     # task / flag / audit
     "Task",
