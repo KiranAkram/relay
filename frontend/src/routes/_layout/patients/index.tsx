@@ -6,7 +6,7 @@ import type { PatientPublic } from "@/client"
 import AddPatient from "@/components/Patients/AddPatient"
 import { getCensusQueryOptions } from "@/components/Patients/CensusPicker"
 import { PatientActionsMenu } from "@/components/Patients/PatientActionsMenu"
-import PendingItems from "@/components/Pending/PendingItems"
+import PendingTable from "@/components/Pending/PendingTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -120,7 +120,7 @@ function Patients() {
           {isAdmin(user) && <AddPatient />}
         </div>
       </div>
-      <Suspense fallback={<PendingItems />}>
+      <Suspense fallback={<PendingTable />}>
         <CensusTable includeDischarged={includeDischarged} />
       </Suspense>
     </div>

@@ -8,6 +8,7 @@ nothing here touches patient records.
 """
 
 import logging
+import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -53,6 +54,9 @@ def process_handover(
         return
 
     handover.attempts += 1
+    started = time.perf_counter()
+    log = {"handover_id": str(handover_id), "attempt": handover.attempts}
+    logger.info("pipeline start", extra=log)
     try:
         _run(
             session,
@@ -62,12 +66,16 @@ def process_handover(
             extractor or get_extractor(settings),
         )
     except Exception as exc:
-        logger.exception("handover %s failed", handover_id)
+        logger.exception(
+            "pipeline failed", extra={**log, "duration_ms": _elapsed_ms(started)}
+        )
         session.rollback()
         handover.status = HandoverStatus.failed
         handover.last_error = f"{type(exc).__name__}: {exc}"[:2000]
         session.add(handover)
         session.commit()
+    else:
+        logger.info("pipeline done", extra={**log, "duration_ms": _elapsed_ms(started)})
 
 
 def _run(
@@ -86,17 +94,21 @@ def _run(
         ).all()
     )
     audio = storage.get(handover.audio_key)
+    stage = time.perf_counter()
     handover.transcript_text = transcriber.transcribe(
         audio, Path(handover.audio_key).name, sorted({p.family_name for p in census})
     )
     handover.transcript_provider = settings.STT_PROVIDER
     handover.transcript_model = _model_label(settings.STT_PROVIDER, settings.STT_MODEL)
+    _log_stage("transcribed", handover, stage, chars=len(handover.transcript_text))
     _set_status(session, handover, HandoverStatus.extracting)
 
+    stage = time.perf_counter()
     extraction = extractor.extract(handover.transcript_text)
     handover.extraction_raw = extraction.model_dump(mode="json")
     handover.extraction_model = _model_label(settings.LLM_PROVIDER, settings.LLM_MODEL)
     handover.extraction_prompt_version = settings.EXTRACTION_PROMPT_VERSION
+    _log_stage("extracted", handover, stage, cards=len(extraction.patients))
     _set_status(session, handover, HandoverStatus.matching)
 
     # A re-run replaces the previous drafts; they were never confirmed.
@@ -137,6 +149,24 @@ def _draft_card(
             for item in card.action_items
         ],
         transcript_excerpt=card.transcript_excerpt,
+    )
+
+
+def _elapsed_ms(since: float) -> float:
+    return round((time.perf_counter() - since) * 1000, 1)
+
+
+def _log_stage(stage: str, handover: Handover, since: float, **counts: int) -> None:
+    """Ids, timings and counts only — never transcript or card text at INFO."""
+    logger.info(
+        "pipeline %s",
+        stage,
+        extra={
+            "handover_id": str(handover.id),
+            "stage": stage,
+            "duration_ms": _elapsed_ms(since),
+            **counts,
+        },
     )
 
 

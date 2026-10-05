@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     JOB_RUNNER: Literal["inprocess", "sync"] = "inprocess"
     # Confirm creates a `task_due_soon` flag this many minutes before a task is due.
     ALERT_LEAD_MINUTES: int = 15
+    # INFO everywhere by default; set DEBUG by hand when needed (DEBUG may log
+    # transcript text, which must not reach a shared log in production).
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     @field_validator("HOSPITAL_TIMEZONE")
     @classmethod

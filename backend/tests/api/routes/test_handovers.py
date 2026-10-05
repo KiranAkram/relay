@@ -73,7 +73,8 @@ def test_upload_runs_pipeline_and_stores_audio(
     assert doc.type == "audio"
     assert doc.patient_id is None
     assert doc.size_bytes == len(b"not really audio")
-    assert len(audit_entries(db, "handover.uploaded", content["id"])) == 1
+    (uploaded,) = audit_entries(db, "handover.uploaded", content["id"])
+    assert uploaded.request_id == response.headers["x-request-id"]
 
     detail = client.get(f"{URL}/{handover_id}", headers=normal_user_token_headers)
     assert detail.status_code == 200
