@@ -36,7 +36,11 @@ export function Main({ items }: MainProps) {
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = currentPath === item.path
+            // Sub-pages (e.g. /handovers/new) keep their section highlighted.
+            const isActive =
+              item.path === "/"
+                ? currentPath === "/"
+                : currentPath.startsWith(item.path)
 
             return (
               <SidebarMenuItem key={item.title}>

@@ -18,6 +18,9 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutHandoversIndexRouteImport } from './routes/_layout/handovers/index'
+import { Route as LayoutHandoversHandoverIdRouteImport } from './routes/_layout/handovers/$handoverId'
+import { Route as LayoutHandoversNewRouteImport } from './routes/_layout/handovers/new'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -63,6 +66,22 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutHandoversIndexRoute = LayoutHandoversIndexRouteImport.update({
+  id: '/handovers/',
+  path: '/handovers/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutHandoversHandoverIdRoute =
+  LayoutHandoversHandoverIdRouteImport.update({
+    id: '/handovers/$handoverId',
+    path: '/handovers/$handoverId',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutHandoversNewRoute = LayoutHandoversNewRouteImport.update({
+  id: '/handovers/new',
+  path: '/handovers/new',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -73,6 +92,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/handovers/$handoverId': typeof LayoutHandoversHandoverIdRoute
+  '/handovers/new': typeof LayoutHandoversNewRoute
+  '/handovers/': typeof LayoutHandoversIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -83,6 +105,9 @@ export interface FileRoutesByTo {
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
+  '/handovers/$handoverId': typeof LayoutHandoversHandoverIdRoute
+  '/handovers/new': typeof LayoutHandoversNewRoute
+  '/handovers': typeof LayoutHandoversIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +120,9 @@ export interface FileRoutesById {
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/handovers/$handoverId': typeof LayoutHandoversHandoverIdRoute
+  '/_layout/handovers/new': typeof LayoutHandoversNewRoute
+  '/_layout/handovers/': typeof LayoutHandoversIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +135,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/items'
     | '/settings'
+    | '/handovers/$handoverId'
+    | '/handovers/new'
+    | '/handovers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -117,6 +148,9 @@ export interface FileRouteTypes {
     | '/items'
     | '/settings'
     | '/'
+    | '/handovers/$handoverId'
+    | '/handovers/new'
+    | '/handovers'
   id:
     | '__root__'
     | '/_layout'
@@ -128,6 +162,9 @@ export interface FileRouteTypes {
     | '/_layout/items'
     | '/_layout/settings'
     | '/_layout/'
+    | '/_layout/handovers/$handoverId'
+    | '/_layout/handovers/new'
+    | '/_layout/handovers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -203,6 +240,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/handovers/': {
+      id: '/_layout/handovers/'
+      path: '/handovers'
+      fullPath: '/handovers/'
+      preLoaderRoute: typeof LayoutHandoversIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/handovers/$handoverId': {
+      id: '/_layout/handovers/$handoverId'
+      path: '/handovers/$handoverId'
+      fullPath: '/handovers/$handoverId'
+      preLoaderRoute: typeof LayoutHandoversHandoverIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/handovers/new': {
+      id: '/_layout/handovers/new'
+      path: '/handovers/new'
+      fullPath: '/handovers/new'
+      preLoaderRoute: typeof LayoutHandoversNewRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
@@ -211,6 +269,9 @@ interface LayoutRouteChildren {
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutHandoversHandoverIdRoute: typeof LayoutHandoversHandoverIdRoute
+  LayoutHandoversNewRoute: typeof LayoutHandoversNewRoute
+  LayoutHandoversIndexRoute: typeof LayoutHandoversIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -218,6 +279,9 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutHandoversHandoverIdRoute: LayoutHandoversHandoverIdRoute,
+  LayoutHandoversNewRoute: LayoutHandoversNewRoute,
+  LayoutHandoversIndexRoute: LayoutHandoversIndexRoute,
 }
 
 const LayoutRouteWithChildren =
