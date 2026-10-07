@@ -58,8 +58,10 @@ def test_one_active_patient_per_bed(
     assert taken.status_code == 409
     assert "Bed CCU-7 is occupied by MRN-100007" in taken.json()["detail"]
 
+    # CCU-95 is used only here: the patient stays active, so the bed stays
+    # taken for the rest of the run, and the discharge test needs CCU-97 free.
     created = client.post(
-        f"{URL}/", headers=superuser_token_headers, json=_new_patient("CCU-97")
+        f"{URL}/", headers=superuser_token_headers, json=_new_patient("CCU-95")
     )
     assert created.status_code == 200, created.text
     moved = client.patch(
