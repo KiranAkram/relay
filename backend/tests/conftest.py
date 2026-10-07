@@ -11,12 +11,17 @@ from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
 from app.models import (
+    AllergyIntolerance,
+    Condition,
     DocumentReference,
     Flag,
     Handover,
     HandoverPatient,
     Item,
+    MedicationStatement,
+    Observation,
     Patient,
+    PatientLocation,
     Task,
     User,
 )
@@ -43,6 +48,11 @@ def db() -> Generator[Session]:
             HandoverPatient,
             Handover,
             Item,
+            Condition,
+            MedicationStatement,
+            AllergyIntolerance,
+            Observation,
+            PatientLocation,
             Patient,
             User,
         ):

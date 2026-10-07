@@ -77,6 +77,7 @@ def create_patient(
     Admit a patient to the census (admin).
     """
     _require_free_mrn(session, patient_in.mrn)
+    _require_free_bed(session, patient_in.bed)
     patient = Patient.model_validate(patient_in)
     session.add(patient)
     audit.record(
@@ -114,6 +115,8 @@ def update_patient(
         raise HTTPException(status_code=400, detail="Nothing to update")
     if "mrn" in update and update["mrn"] != patient.mrn:
         _require_free_mrn(session, update["mrn"])
+    if "bed" in update and update["bed"] != patient.bed:
+        _require_free_bed(session, update["bed"], except_id=patient.id)
 
     before = patient.model_dump(mode="json", include=set(update))
     patient.sqlmodel_update(update)
@@ -235,13 +238,39 @@ def _require_free_mrn(session: SessionDep, mrn: str) -> None:
         raise HTTPException(status_code=409, detail=f"MRN {mrn} is already in use")
 
 
+def _require_free_bed(
+    session: SessionDep, bed: str | None, *, except_id: uuid.UUID | None = None
+) -> None:
+    """One active patient per bed. `None` (no bed yet) is always allowed."""
+    if bed is None:
+        return
+    statement = select(Patient).where(
+        Patient.bed == bed,
+        col(Patient.active).is_(True),
+        col(Patient.deleted_at).is_(None),
+    )
+    if except_id is not None:
+        statement = statement.where(Patient.id != except_id)
+    occupant = session.exec(statement).first()
+    if occupant is not None:
+        raise HTTPException(
+            status_code=409, detail=f"Bed {bed} is occupied by {occupant.mrn}"
+        )
+
+
 def _commit_or_409(session: SessionDep) -> None:
-    """The MRN pre-check can lose a race; the unique index is the real guard."""
+    """The MRN and bed pre-checks can lose a race; the unique indexes are the
+    real guard."""
     try:
         session.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         session.rollback()
-        raise HTTPException(status_code=409, detail="MRN is already in use") from None
+        detail = (
+            "Bed is already occupied"
+            if "ux_patient_bed_active" in str(exc.orig)
+            else "MRN is already in use"
+        )
+        raise HTTPException(status_code=409, detail=detail) from None
 
 
 def bed_key(patient: Patient) -> tuple[Any, ...]:

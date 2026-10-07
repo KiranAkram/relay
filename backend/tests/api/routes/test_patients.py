@@ -49,6 +49,30 @@ def test_read_patients_is_the_census_in_bed_order(
     assert all(p["active"] for p in content["data"])
 
 
+def test_one_active_patient_per_bed(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    taken = client.post(
+        f"{URL}/", headers=superuser_token_headers, json=_new_patient("CCU-7")
+    )
+    assert taken.status_code == 409
+    assert "Bed CCU-7 is occupied by MRN-100007" in taken.json()["detail"]
+
+    # CCU-95 is used only here: the patient stays active, so the bed stays
+    # taken for the rest of the run, and the discharge test needs CCU-97 free.
+    created = client.post(
+        f"{URL}/", headers=superuser_token_headers, json=_new_patient("CCU-95")
+    )
+    assert created.status_code == 200, created.text
+    moved = client.patch(
+        f"{URL}/{created.json()['id']}",
+        headers=superuser_token_headers,
+        json={"bed": "CCU-8"},
+    )
+    assert moved.status_code == 409
+    assert "occupied" in moved.json()["detail"]
+
+
 def test_only_admins_change_the_census(
     client: TestClient,
     normal_user_token_headers: dict[str, str],

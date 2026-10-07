@@ -15,9 +15,11 @@ RECORDED_AT = datetime(2026, 10, 2, 7, 0, tzinfo=TZ)
 
 def test_census_from_seed_builds_patients_with_ids() -> None:
     census = census_from_seed()
-    assert len(census) == 10
-    assert len({p.id for p in census}) == 10
-    assert {p.bed for p in census} >= {"CCU-1", "CCU-10"}
+    assert len(census) == 22
+    assert len({p.id for p in census}) == 22
+    assert len({p.bed for p in census}) == 22  # one patient per bed
+    assert {p.bed for p in census} >= {"CCU-1", "CCU-10", "CCU-22"}
+    assert all(p.synthetic for p in census)
 
 
 def test_resolve_cards_matches_and_resolves_due_times() -> None:
