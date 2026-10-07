@@ -1,0 +1,468 @@
+{
+  "_comment": "Synthetic cardiology census. Every person, MRN, date and result is fabricated; no real PHI. Times are relative to the moment of seeding (days_ago / hours_ago). Beds CCU-1..10 are the original demo census (tests and evals depend on the two Khans and on Baig in bed 7); CCU-11..22 were added 7 Oct 2026.",
+  "unit": "CCU",
+  "patients": [
+    {
+      "mrn": "MRN-100001", "family_name": "Khan", "given_name": "Imran", "birth_date": "1958-03-14", "sex": "male",
+      "bed": "CCU-1", "admitting_diagnosis": "NSTEMI, post-PCI to LAD (drug-eluting stent)", "attending_name": "Dr. Siddiqui",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["NSTEMI, drug-eluting stent to LAD", "Hypertension", "Type 2 diabetes mellitus"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Ticagrelor", "dose": "90 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Metoprolol tartrate", "dose": "25 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Ramipril", "dose": "2.5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Metformin", "dose": "500 mg", "route": "oral", "frequency": "twice daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 2, "heart_rate": 68, "blood_pressure": "128/76", "respiratory_rate": 16, "spo2": 97, "temperature": 36.8},
+      "labs": [
+        {"code": "troponin", "value": 1250, "unit": "ng/L", "interpretation": "high", "hours_ago": 12},
+        {"code": "potassium", "value": 4.1, "unit": "mmol/L", "hours_ago": 6},
+        {"code": "magnesium", "value": 0.85, "unit": "mmol/L", "hours_ago": 6},
+        {"code": "creatinine", "value": 88, "unit": "umol/L", "hours_ago": 6}
+      ]
+    },
+    {
+      "mrn": "MRN-100002", "family_name": "Ahmed", "given_name": "Farida", "birth_date": "1949-11-02", "sex": "female",
+      "bed": "CCU-2", "admitting_diagnosis": "Acute decompensated heart failure, EF 25%, on IV furosemide", "attending_name": "Dr. Siddiqui",
+      "admitted_days_ago": 3, "code_status": "full_code",
+      "problems": ["Acute decompensated heart failure", "Heart failure with reduced ejection fraction, EF 25%", "Chronic kidney disease stage 3", "Permanent atrial fibrillation"],
+      "medications": [
+        {"medication": "Furosemide", "dose": "80 mg", "route": "intravenous", "frequency": "twice daily"},
+        {"medication": "Spironolactone", "dose": "25 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Bisoprolol", "dose": "2.5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Apixaban", "dose": "5 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Sacubitril/valsartan", "dose": "24/26 mg", "route": "oral", "frequency": "twice daily", "status": "on_hold", "note": "Held while blood pressure is low"}
+      ],
+      "allergies": [{"substance": "Penicillin", "reaction": "Rash", "severity": "moderate"}],
+      "vitals": {"hours_ago": 2, "heart_rate": 92, "blood_pressure": "104/62", "respiratory_rate": 22, "spo2": 93, "temperature": 36.9,
+                 "interpretations": {"respiratory_rate": "high", "spo2": "low"}},
+      "labs": [
+        {"code": "potassium", "value": 3.4, "unit": "mmol/L", "interpretation": "low", "hours_ago": 5},
+        {"code": "magnesium", "value": 0.72, "unit": "mmol/L", "interpretation": "low", "hours_ago": 5},
+        {"code": "creatinine", "value": 142, "unit": "umol/L", "interpretation": "high", "hours_ago": 5},
+        {"code": "bnp", "value": 1850, "unit": "pg/mL", "interpretation": "high", "hours_ago": 30}
+      ]
+    },
+    {
+      "mrn": "MRN-100003", "family_name": "Raza", "given_name": "Bilal", "birth_date": "1971-06-27", "sex": "male",
+      "bed": "CCU-3", "admitting_diagnosis": "Atrial fibrillation with RVR, on heparin drip", "attending_name": "Dr. Malik",
+      "admitted_days_ago": 2, "code_status": "full_code",
+      "problems": ["New atrial fibrillation with rapid ventricular response", "Suspected hyperthyroidism"],
+      "medications": [
+        {"medication": "Heparin infusion", "dose": "1200 units/hour", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Metoprolol tartrate", "dose": "50 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Digoxin", "dose": "125 micrograms", "route": "oral", "frequency": "once daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 1, "heart_rate": 118, "blood_pressure": "118/74", "respiratory_rate": 18, "spo2": 96, "temperature": 37.1,
+                 "interpretations": {"heart_rate": "high"}},
+      "labs": [
+        {"code": "aptt", "value": 72, "unit": "s", "hours_ago": 4},
+        {"code": "potassium", "value": 3.9, "unit": "mmol/L", "hours_ago": 8},
+        {"code": "magnesium", "value": 0.8, "unit": "mmol/L", "hours_ago": 8},
+        {"code": "tsh", "value": 0.01, "unit": "mIU/L", "interpretation": "low", "hours_ago": 30},
+        {"code": "troponin", "value": 18, "unit": "ng/L", "hours_ago": 30}
+      ]
+    },
+    {
+      "mrn": "MRN-100004", "family_name": "Hussain", "given_name": "Nasreen", "birth_date": "1963-09-08", "sex": "female",
+      "bed": "CCU-4", "admitting_diagnosis": "Unstable angina, awaiting cardiac catheterisation", "attending_name": "Dr. Malik",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Unstable angina", "Hypertension", "Dyslipidaemia"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Clopidogrel", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Glyceryl trinitrate infusion", "dose": "2 mg/hour", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Bisoprolol", "dose": "5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Fondaparinux", "dose": "2.5 mg", "route": "subcutaneous", "frequency": "once daily"}
+      ],
+      "allergies": [{"substance": "Iodinated contrast", "reaction": "Urticaria", "severity": "moderate"}],
+      "vitals": {"hours_ago": 2, "heart_rate": 74, "blood_pressure": "142/88", "respiratory_rate": 16, "spo2": 98, "temperature": 36.7,
+                 "interpretations": {"blood_pressure": "high"}},
+      "labs": [
+        {"code": "troponin", "value": 32, "unit": "ng/L", "interpretation": "high", "hours_ago": 10},
+        {"code": "potassium", "value": 4.3, "unit": "mmol/L", "hours_ago": 10},
+        {"code": "creatinine", "value": 76, "unit": "umol/L", "hours_ago": 10}
+      ]
+    },
+    {
+      "mrn": "MRN-100005", "family_name": "Sheikh", "given_name": "Tariq", "birth_date": "1955-01-19", "sex": "male",
+      "bed": "CCU-5", "admitting_diagnosis": "STEMI, post-primary PCI to RCA, temporary pacing wire in situ", "attending_name": "Dr. Siddiqui",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Inferior STEMI, primary PCI to RCA", "Transient complete heart block, temporary pacing wire", "Cardiogenic shock, resolved"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Prasugrel", "dose": "10 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Noradrenaline infusion", "dose": "0.05 micrograms/kg/min", "route": "intravenous", "frequency": "continuous", "status": "stopped", "note": "Weaned off this morning"},
+        {"medication": "Bisoprolol", "dose": "1.25 mg", "route": "oral", "frequency": "once daily", "status": "on_hold", "note": "Held while paced"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 1, "heart_rate": 60, "blood_pressure": "98/58", "respiratory_rate": 20, "spo2": 95, "temperature": 36.5,
+                 "interpretations": {"blood_pressure": "low"}},
+      "labs": [
+        {"code": "troponin", "value": 8900, "unit": "ng/L", "interpretation": "high", "hours_ago": 8},
+        {"code": "potassium", "value": 4.0, "unit": "mmol/L", "hours_ago": 4},
+        {"code": "magnesium", "value": 0.9, "unit": "mmol/L", "hours_ago": 4},
+        {"code": "creatinine", "value": 118, "unit": "umol/L", "interpretation": "high", "hours_ago": 4},
+        {"code": "lactate", "value": 1.8, "unit": "mmol/L", "hours_ago": 4}
+      ]
+    },
+    {
+      "mrn": "MRN-100006", "family_name": "Qureshi", "given_name": "Sana", "birth_date": "1980-04-30", "sex": "female",
+      "bed": "CCU-6", "admitting_diagnosis": "Peripartum cardiomyopathy, EF 30%", "attending_name": "Dr. Malik",
+      "admitted_days_ago": 5, "code_status": "full_code",
+      "problems": ["Peripartum cardiomyopathy, EF 30%", "Three weeks post-partum", "Breastfeeding"],
+      "medications": [
+        {"medication": "Bisoprolol", "dose": "2.5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Furosemide", "dose": "40 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Enalapril", "dose": "2.5 mg", "route": "oral", "frequency": "twice daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 3, "heart_rate": 78, "blood_pressure": "108/66", "respiratory_rate": 16, "spo2": 98, "temperature": 36.8},
+      "labs": [
+        {"code": "bnp", "value": 620, "unit": "pg/mL", "interpretation": "high", "hours_ago": 20},
+        {"code": "potassium", "value": 4.2, "unit": "mmol/L", "hours_ago": 20},
+        {"code": "creatinine", "value": 70, "unit": "umol/L", "hours_ago": 20}
+      ]
+    },
+    {
+      "mrn": "MRN-100007", "family_name": "Baig", "given_name": "Mirza", "birth_date": "1946-07-11", "sex": "male",
+      "bed": "CCU-7", "admitting_diagnosis": "Complete heart block, awaiting permanent pacemaker", "attending_name": "Dr. Siddiqui",
+      "admitted_days_ago": 2, "code_status": "full_code",
+      "problems": ["Complete heart block", "Hypertension", "Chronic kidney disease stage 3a"],
+      "medications": [
+        {"medication": "Isoprenaline infusion", "dose": "2 micrograms/min", "route": "intravenous", "frequency": "continuous", "status": "on_hold", "note": "Prepared at bedside, start if rate falls below 35"},
+        {"medication": "Amlodipine", "dose": "5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Bisoprolol", "dose": "5 mg", "route": "oral", "frequency": "once daily", "status": "stopped", "note": "Stopped on admission, rate-slowing"}
+      ],
+      "allergies": [{"substance": "Sulfonamides", "reaction": "Rash", "severity": "mild"}],
+      "vitals": {"hours_ago": 1, "heart_rate": 38, "blood_pressure": "150/70", "respiratory_rate": 16, "spo2": 96, "temperature": 36.6,
+                 "interpretations": {"heart_rate": "critical_low", "blood_pressure": "high"}},
+      "labs": [
+        {"code": "potassium", "value": 4.6, "unit": "mmol/L", "hours_ago": 6},
+        {"code": "magnesium", "value": 0.88, "unit": "mmol/L", "hours_ago": 6},
+        {"code": "creatinine", "value": 130, "unit": "umol/L", "interpretation": "high", "hours_ago": 6},
+        {"code": "troponin", "value": 14, "unit": "ng/L", "hours_ago": 30},
+        {"code": "tsh", "value": 2.1, "unit": "mIU/L", "hours_ago": 30}
+      ]
+    },
+    {
+      "mrn": "MRN-100008", "family_name": "Khan", "given_name": "Zubaida", "birth_date": "1952-12-05", "sex": "female",
+      "bed": "CCU-8", "admitting_diagnosis": "Severe aortic stenosis, pre-TAVI workup", "attending_name": "Dr. Malik",
+      "admitted_days_ago": 4, "code_status": "full_code",
+      "problems": ["Severe aortic stenosis, valve area 0.7 cm2", "Heart failure with preserved ejection fraction", "Type 2 diabetes mellitus"],
+      "medications": [
+        {"medication": "Furosemide", "dose": "40 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Metformin", "dose": "1 g", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Atorvastatin", "dose": "40 mg", "route": "oral", "frequency": "at night"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 3, "heart_rate": 72, "blood_pressure": "132/80", "respiratory_rate": 16, "spo2": 97, "temperature": 36.7},
+      "labs": [
+        {"code": "bnp", "value": 410, "unit": "pg/mL", "interpretation": "high", "hours_ago": 26},
+        {"code": "potassium", "value": 4.0, "unit": "mmol/L", "hours_ago": 26},
+        {"code": "creatinine", "value": 92, "unit": "umol/L", "hours_ago": 26}
+      ]
+    },
+    {
+      "mrn": "MRN-100009", "family_name": "Iqbal", "given_name": "Asad", "birth_date": "1967-02-23", "sex": "male",
+      "bed": "CCU-9", "admitting_diagnosis": "Pulmonary embolism, haemodynamically stable, on heparin drip", "attending_name": "Dr. Siddiqui",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Acute bilateral segmental pulmonary embolism", "Mild right ventricular strain", "Knee arthroplasty two weeks ago"],
+      "medications": [
+        {"medication": "Heparin infusion", "dose": "1400 units/hour", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Paracetamol", "dose": "1 g", "route": "oral", "frequency": "four times daily"}
+      ],
+      "allergies": [{"substance": "Codeine", "reaction": "Nausea and vomiting", "severity": "mild"}],
+      "vitals": {"hours_ago": 2, "heart_rate": 96, "blood_pressure": "122/78", "respiratory_rate": 20, "spo2": 94, "temperature": 37.2,
+                 "interpretations": {"spo2": "low"}},
+      "labs": [
+        {"code": "aptt", "value": 58, "unit": "s", "interpretation": "low", "hours_ago": 3},
+        {"code": "troponin", "value": 45, "unit": "ng/L", "interpretation": "high", "hours_ago": 14},
+        {"code": "bnp", "value": 310, "unit": "pg/mL", "interpretation": "high", "hours_ago": 14},
+        {"code": "potassium", "value": 4.1, "unit": "mmol/L", "hours_ago": 14},
+        {"code": "creatinine", "value": 80, "unit": "umol/L", "hours_ago": 14}
+      ]
+    },
+    {
+      "mrn": "MRN-100010", "family_name": "Chaudhry", "given_name": "Rukhsana", "birth_date": "1959-10-16", "sex": "female",
+      "bed": "CCU-10", "admitting_diagnosis": "Infective endocarditis (mitral valve), on IV antibiotics", "attending_name": "Dr. Malik",
+      "admitted_days_ago": 6, "code_status": "full_code",
+      "problems": ["Mitral valve infective endocarditis, Streptococcus viridans", "Moderate mitral regurgitation", "Peripherally inserted central catheter, day 6"],
+      "medications": [
+        {"medication": "Benzylpenicillin", "dose": "2.4 g", "route": "intravenous", "frequency": "every 4 hours"},
+        {"medication": "Gentamicin", "dose": "80 mg", "route": "intravenous", "frequency": "once daily"},
+        {"medication": "Paracetamol", "dose": "1 g", "route": "oral", "frequency": "as required, up to four times daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 2, "heart_rate": 84, "blood_pressure": "118/72", "respiratory_rate": 16, "spo2": 98, "temperature": 37.4},
+      "labs": [
+        {"code": "crp", "value": 48, "unit": "mg/L", "interpretation": "high", "hours_ago": 8},
+        {"code": "creatinine", "value": 84, "unit": "umol/L", "hours_ago": 8},
+        {"code": "potassium", "value": 4.0, "unit": "mmol/L", "hours_ago": 8}
+      ]
+    },
+    {
+      "mrn": "MRN-100011", "family_name": "Qazi", "given_name": "Wajahat", "birth_date": "1966-08-21", "sex": "male",
+      "bed": "CCU-11", "admitting_diagnosis": "NSTEMI on heparin drip, awaiting angiography", "attending_name": "Dr. Farooq",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["NSTEMI, awaiting coronary angiography", "Hypertension", "Ex-smoker"],
+      "medications": [
+        {"medication": "Heparin infusion", "dose": "1300 units/hour", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Bisoprolol", "dose": "2.5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Glyceryl trinitrate patch", "dose": "5 mg", "route": "transdermal", "frequency": "once daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 2, "heart_rate": 82, "blood_pressure": "136/84", "respiratory_rate": 16, "spo2": 97, "temperature": 36.8},
+      "labs": [
+        {"code": "troponin", "value": 860, "unit": "ng/L", "interpretation": "high", "hours_ago": 9},
+        {"code": "aptt", "value": 65, "unit": "s", "hours_ago": 3},
+        {"code": "potassium", "value": 4.2, "unit": "mmol/L", "hours_ago": 9},
+        {"code": "magnesium", "value": 0.84, "unit": "mmol/L", "hours_ago": 9},
+        {"code": "creatinine", "value": 95, "unit": "umol/L", "hours_ago": 9}
+      ]
+    },
+    {
+      "mrn": "MRN-100012", "family_name": "Sheikh", "given_name": "Yusuf", "birth_date": "1983-05-02", "sex": "male",
+      "bed": "CCU-12", "admitting_diagnosis": "Chest pain, acute coronary syndrome ruled out, two negative troponins", "attending_name": "Dr. Rehman",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Chest pain, acute coronary syndrome excluded", "Gastro-oesophageal reflux"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily", "note": "300 mg loading dose given in the emergency department"},
+        {"medication": "Glyceryl trinitrate spray", "dose": "400 micrograms", "route": "sublingual", "frequency": "as required"},
+        {"medication": "Omeprazole", "dose": "20 mg", "route": "oral", "frequency": "once daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 3, "heart_rate": 70, "blood_pressure": "124/78", "respiratory_rate": 14, "spo2": 99, "temperature": 36.6},
+      "labs": [
+        {"code": "troponin", "value": 6, "unit": "ng/L", "hours_ago": 14},
+        {"code": "troponin", "value": 7, "unit": "ng/L", "hours_ago": 11},
+        {"code": "potassium", "value": 4.3, "unit": "mmol/L", "hours_ago": 14},
+        {"code": "creatinine", "value": 78, "unit": "umol/L", "hours_ago": 14}
+      ]
+    },
+    {
+      "mrn": "MRN-100013", "family_name": "Haider", "given_name": "Syed Muhammad Zulqarnain", "birth_date": "1951-02-09", "sex": "male",
+      "bed": "CCU-13", "admitting_diagnosis": "Coronary artery bypass grafting x3, post-operative day 2, post-operative atrial fibrillation", "attending_name": "Dr. Farooq",
+      "admitted_days_ago": 2, "code_status": "full_code",
+      "problems": ["Coronary artery bypass grafting x3, post-operative day 2", "Post-operative atrial fibrillation", "Type 2 diabetes mellitus"],
+      "medications": [
+        {"medication": "Amiodarone", "dose": "200 mg", "route": "oral", "frequency": "three times daily"},
+        {"medication": "Metoprolol tartrate", "dose": "25 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Enoxaparin", "dose": "40 mg", "route": "subcutaneous", "frequency": "once daily"},
+        {"medication": "Insulin (variable rate)", "dose": "per sliding scale", "route": "intravenous", "frequency": "continuous"}
+      ],
+      "allergies": [{"substance": "Morphine", "reaction": "Pruritus", "severity": "mild"}],
+      "vitals": {"hours_ago": 1, "heart_rate": 104, "blood_pressure": "110/68", "respiratory_rate": 18, "spo2": 95, "temperature": 37.3,
+                 "interpretations": {"heart_rate": "high"}},
+      "labs": [
+        {"code": "potassium", "value": 3.6, "unit": "mmol/L", "hours_ago": 4},
+        {"code": "magnesium", "value": 0.78, "unit": "mmol/L", "interpretation": "low", "hours_ago": 4},
+        {"code": "creatinine", "value": 105, "unit": "umol/L", "interpretation": "high", "hours_ago": 4},
+        {"code": "haemoglobin", "value": 98, "unit": "g/L", "interpretation": "low", "hours_ago": 4}
+      ]
+    },
+    {
+      "mrn": "MRN-100014", "family_name": "Akhtar", "given_name": "Robina", "birth_date": "1960-12-30", "sex": "female",
+      "bed": "CCU-14", "admitting_diagnosis": "New atrial fibrillation, rate controlled", "attending_name": "Dr. Rehman",
+      "admitted_days_ago": 3, "code_status": "full_code",
+      "problems": ["New atrial fibrillation, rate controlled", "Asthma", "Obesity"],
+      "medications": [
+        {"medication": "Diltiazem", "dose": "60 mg", "route": "oral", "frequency": "three times daily"},
+        {"medication": "Apixaban", "dose": "5 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Atorvastatin", "dose": "20 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Salbutamol inhaler", "dose": "200 micrograms", "route": "inhaled", "frequency": "as required"}
+      ],
+      "allergies": [{"substance": "Non-steroidal anti-inflammatory drugs", "reaction": "Bronchospasm", "severity": "severe"}],
+      "vitals": {"hours_ago": 2, "heart_rate": 88, "blood_pressure": "128/78", "respiratory_rate": 16, "spo2": 97, "temperature": 36.7},
+      "labs": [
+        {"code": "potassium", "value": 4.0, "unit": "mmol/L", "hours_ago": 20},
+        {"code": "magnesium", "value": 0.82, "unit": "mmol/L", "hours_ago": 20},
+        {"code": "tsh", "value": 1.8, "unit": "mIU/L", "hours_ago": 60},
+        {"code": "creatinine", "value": 70, "unit": "umol/L", "hours_ago": 20},
+        {"code": "bnp", "value": 220, "unit": "pg/mL", "interpretation": "high", "hours_ago": 60}
+      ],
+      "locations": [
+        {"bed": "CCU-19", "days_ago_start": 3, "days_ago_end": 2},
+        {"bed": "CCU-14", "days_ago_start": 2, "days_ago_end": null}
+      ]
+    },
+    {
+      "mrn": "MRN-100015", "family_name": "Abbas", "given_name": "Ghulam", "birth_date": "1948-04-17", "sex": "male",
+      "bed": "CCU-15", "admitting_diagnosis": "Decompensated heart failure on IV diuretics and inotrope, ischaemic cardiomyopathy EF 20%", "attending_name": "Dr. Farooq",
+      "admitted_days_ago": 4, "code_status": "dnr",
+      "problems": ["Acute decompensated heart failure", "Ischaemic cardiomyopathy, EF 20%", "Chronic kidney disease stage 3b", "Hyponatraemia", "Permanent atrial fibrillation"],
+      "medications": [
+        {"medication": "Furosemide infusion", "dose": "10 mg/hour", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Dobutamine infusion", "dose": "2.5 micrograms/kg/min", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Spironolactone", "dose": "25 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Apixaban", "dose": "2.5 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Carvedilol", "dose": "6.25 mg", "route": "oral", "frequency": "twice daily", "status": "on_hold", "note": "Held while on inotrope"}
+      ],
+      "allergies": [{"substance": "Angiotensin-converting enzyme inhibitors", "reaction": "Angioedema", "severity": "severe"}],
+      "vitals": {"hours_ago": 1, "heart_rate": 98, "blood_pressure": "92/56", "respiratory_rate": 24, "spo2": 92, "temperature": 36.6,
+                 "interpretations": {"blood_pressure": "low", "respiratory_rate": "high", "spo2": "low"}},
+      "labs": [
+        {"code": "potassium", "value": 3.3, "unit": "mmol/L", "interpretation": "low", "hours_ago": 4},
+        {"code": "magnesium", "value": 0.7, "unit": "mmol/L", "interpretation": "low", "hours_ago": 4},
+        {"code": "sodium", "value": 129, "unit": "mmol/L", "interpretation": "low", "hours_ago": 4},
+        {"code": "creatinine", "value": 168, "unit": "umol/L", "interpretation": "high", "hours_ago": 4},
+        {"code": "bnp", "value": 3200, "unit": "pg/mL", "interpretation": "high", "hours_ago": 28}
+      ]
+    },
+    {
+      "mrn": "MRN-100016", "family_name": "Javed", "given_name": "Maryam", "birth_date": "1990-07-25", "sex": "female",
+      "bed": "CCU-16", "admitting_diagnosis": "Supraventricular tachycardia, terminated with adenosine, awaiting electrophysiology review", "attending_name": "Dr. Rehman",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Atrioventricular nodal re-entrant tachycardia, terminated", "Awaiting electrophysiology review"],
+      "medications": [
+        {"medication": "Bisoprolol", "dose": "2.5 mg", "route": "oral", "frequency": "once daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 3, "heart_rate": 72, "blood_pressure": "112/70", "respiratory_rate": 14, "spo2": 99, "temperature": 36.5},
+      "labs": [
+        {"code": "potassium", "value": 4.1, "unit": "mmol/L", "hours_ago": 16},
+        {"code": "magnesium", "value": 0.86, "unit": "mmol/L", "hours_ago": 16},
+        {"code": "tsh", "value": 1.2, "unit": "mIU/L", "hours_ago": 16},
+        {"code": "troponin", "value": 9, "unit": "ng/L", "hours_ago": 16}
+      ]
+    },
+    {
+      "mrn": "MRN-100017", "family_name": "Lodhi", "given_name": "Abdul Rehman", "birth_date": "1957-11-11", "sex": "male",
+      "bed": "CCU-17", "admitting_diagnosis": "Hypokalaemia with frequent ventricular ectopics, on IV potassium replacement", "attending_name": "Dr. Farooq",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Hypokalaemia with frequent ventricular ectopics", "Heart failure with reduced ejection fraction, EF 35%", "Hypomagnesaemia"],
+      "medications": [
+        {"medication": "Potassium chloride", "dose": "40 mmol in 1 L sodium chloride 0.9%", "route": "intravenous", "frequency": "over 4 hours"},
+        {"medication": "Magnesium sulfate", "dose": "8 mmol", "route": "intravenous", "frequency": "over 2 hours, once"},
+        {"medication": "Bisoprolol", "dose": "5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Sacubitril/valsartan", "dose": "49/51 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Furosemide", "dose": "40 mg", "route": "oral", "frequency": "once daily", "status": "on_hold", "note": "Held until potassium corrected"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 1, "heart_rate": 76, "blood_pressure": "124/80", "respiratory_rate": 16, "spo2": 97, "temperature": 36.7},
+      "labs": [
+        {"code": "potassium", "value": 2.9, "unit": "mmol/L", "interpretation": "critical_low", "hours_ago": 7},
+        {"code": "potassium", "value": 3.4, "unit": "mmol/L", "interpretation": "low", "hours_ago": 2},
+        {"code": "magnesium", "value": 0.65, "unit": "mmol/L", "interpretation": "low", "hours_ago": 7},
+        {"code": "creatinine", "value": 98, "unit": "umol/L", "hours_ago": 7},
+        {"code": "bnp", "value": 540, "unit": "pg/mL", "interpretation": "high", "hours_ago": 7}
+      ]
+    },
+    {
+      "mrn": "MRN-100018", "family_name": "Bibi", "given_name": "Parveen", "birth_date": "1944-06-03", "sex": "female",
+      "bed": "CCU-18", "admitting_diagnosis": "Elective PCI to circumflex, overnight observation", "attending_name": "Dr. Rehman",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Stable angina, elective stent to circumflex artery", "Right radial access site", "Hypertension"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Clopidogrel", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Atorvastatin", "dose": "40 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Amlodipine", "dose": "5 mg", "route": "oral", "frequency": "once daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 3, "heart_rate": 66, "blood_pressure": "134/80", "respiratory_rate": 14, "spo2": 98, "temperature": 36.6},
+      "labs": [
+        {"code": "creatinine", "value": 96, "unit": "umol/L", "hours_ago": 12},
+        {"code": "potassium", "value": 4.4, "unit": "mmol/L", "hours_ago": 12},
+        {"code": "troponin", "value": 22, "unit": "ng/L", "interpretation": "high", "hours_ago": 12},
+        {"code": "haemoglobin", "value": 121, "unit": "g/L", "hours_ago": 12}
+      ]
+    },
+    {
+      "mrn": "MRN-100019", "family_name": "Mirza", "given_name": "Kamran", "birth_date": "1969-09-14", "sex": "male",
+      "bed": "CCU-19", "admitting_diagnosis": "Inferior STEMI post-PCI, out-of-hospital cardiac arrest (VF), post temperature management", "attending_name": "Dr. Farooq",
+      "admitted_days_ago": 2, "code_status": "full_code",
+      "problems": ["Inferior STEMI, primary PCI to RCA", "Out-of-hospital cardiac arrest, ventricular fibrillation, return of circulation after 8 minutes", "Targeted temperature management completed", "Acute kidney injury"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Ticagrelor", "dose": "90 mg", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Amiodarone infusion", "dose": "900 mg over 24 hours", "route": "intravenous", "frequency": "continuous"},
+        {"medication": "Noradrenaline infusion", "dose": "0.05 micrograms/kg/min", "route": "intravenous", "frequency": "continuous", "note": "Weaning"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 1, "heart_rate": 88, "blood_pressure": "100/60", "respiratory_rate": 18, "spo2": 96, "temperature": 37.0,
+                 "interpretations": {"blood_pressure": "low"}},
+      "labs": [
+        {"code": "troponin", "value": 15000, "unit": "ng/L", "interpretation": "high", "hours_ago": 20},
+        {"code": "potassium", "value": 4.4, "unit": "mmol/L", "hours_ago": 4},
+        {"code": "magnesium", "value": 0.95, "unit": "mmol/L", "hours_ago": 4},
+        {"code": "lactate", "value": 1.4, "unit": "mmol/L", "hours_ago": 4},
+        {"code": "creatinine", "value": 125, "unit": "umol/L", "interpretation": "high", "hours_ago": 4}
+      ],
+      "locations": [
+        {"bed": "CCU-19", "days_ago_start": 2, "days_ago_end": null}
+      ]
+    },
+    {
+      "mrn": "MRN-100020", "family_name": "Shah", "given_name": "Nadia", "birth_date": "1978-01-28", "sex": "female",
+      "bed": "CCU-20", "admitting_diagnosis": "Acute viral myocarditis, mild left ventricular impairment EF 45%", "attending_name": "Dr. Rehman",
+      "admitted_days_ago": 3, "code_status": "full_code",
+      "problems": ["Acute myocarditis, presumed viral", "Mild left ventricular impairment, EF 45%"],
+      "medications": [
+        {"medication": "Ramipril", "dose": "2.5 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Bisoprolol", "dose": "1.25 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Colchicine", "dose": "500 micrograms", "route": "oral", "frequency": "twice daily"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 3, "heart_rate": 80, "blood_pressure": "110/70", "respiratory_rate": 16, "spo2": 98, "temperature": 37.0},
+      "labs": [
+        {"code": "troponin", "value": 320, "unit": "ng/L", "interpretation": "high", "hours_ago": 10},
+        {"code": "crp", "value": 22, "unit": "mg/L", "interpretation": "high", "hours_ago": 10},
+        {"code": "potassium", "value": 4.0, "unit": "mmol/L", "hours_ago": 10},
+        {"code": "bnp", "value": 180, "unit": "pg/mL", "interpretation": "high", "hours_ago": 34}
+      ]
+    },
+    {
+      "mrn": "MRN-100021", "family_name": "Ahmed", "given_name": "Iftikhar", "birth_date": "1953-03-19", "sex": "male",
+      "bed": "CCU-21", "admitting_diagnosis": "Moderate pericardial effusion after myocardial infarction, no tamponade, serial echocardiography", "attending_name": "Dr. Farooq",
+      "admitted_days_ago": 2, "code_status": "full_code",
+      "problems": ["Post-infarction pericarditis with moderate pericardial effusion", "Anterior STEMI three weeks ago, stent to LAD", "Hypertension"],
+      "medications": [
+        {"medication": "Aspirin", "dose": "75 mg", "route": "oral", "frequency": "once daily"},
+        {"medication": "Colchicine", "dose": "500 micrograms", "route": "oral", "frequency": "twice daily"},
+        {"medication": "Atorvastatin", "dose": "80 mg", "route": "oral", "frequency": "at night"},
+        {"medication": "Apixaban", "dose": "5 mg", "route": "oral", "frequency": "twice daily", "status": "on_hold", "note": "Held while effusion is being watched"}
+      ],
+      "allergies": [],
+      "vitals": {"hours_ago": 1, "heart_rate": 92, "blood_pressure": "112/70", "respiratory_rate": 18, "spo2": 97, "temperature": 37.2},
+      "labs": [
+        {"code": "crp", "value": 68, "unit": "mg/L", "interpretation": "high", "hours_ago": 8},
+        {"code": "troponin", "value": 210, "unit": "ng/L", "interpretation": "high", "hours_ago": 8},
+        {"code": "potassium", "value": 4.2, "unit": "mmol/L", "hours_ago": 8},
+        {"code": "creatinine", "value": 90, "unit": "umol/L", "hours_ago": 8}
+      ]
+    },
+    {
+      "mrn": "MRN-100022", "family_name": "Noor", "given_name": "Saima", "birth_date": "1962-10-07", "sex": "female",
+      "bed": "CCU-22", "admitting_diagnosis": "Mobitz type II second-degree heart block with pauses up to 4 seconds, temporary pacing on standby", "attending_name": "Dr. Rehman",
+      "admitted_days_ago": 1, "code_status": "full_code",
+      "problems": ["Mobitz type II second-degree atrioventricular block", "Pauses up to 4 seconds on telemetry", "Hypothyroidism"],
+      "medications": [
+        {"medication": "Levothyroxine", "dose": "75 micrograms", "route": "oral", "frequency": "once daily"},
+        {"medication": "Atropine", "dose": "500 micrograms", "route": "intravenous", "frequency": "as required for symptomatic bradycardia"},
+        {"medication": "Bisoprolol", "dose": "2.5 mg", "route": "oral", "frequency": "once daily", "status": "stopped", "note": "Stopped on admission, rate-slowing"}
+      ],
+      "allergies": [{"substance": "Latex", "reaction": "Contact dermatitis", "severity": "mild"}],
+      "vitals": {"hours_ago": 1, "heart_rate": 44, "blood_pressure": "138/82", "respiratory_rate": 16, "spo2": 97, "temperature": 36.6,
+                 "interpretations": {"heart_rate": "low"}},
+      "labs": [
+        {"code": "potassium", "value": 4.5, "unit": "mmol/L", "hours_ago": 6},
+        {"code": "magnesium", "value": 0.9, "unit": "mmol/L", "hours_ago": 6},
+        {"code": "tsh", "value": 3.4, "unit": "mIU/L", "hours_ago": 6},
+        {"code": "troponin", "value": 11, "unit": "ng/L", "hours_ago": 6}
+      ]
+    }
+  ]
+}
