@@ -40,17 +40,25 @@ export function useRecorder() {
   const startedAtRef = useRef<Date | null>(null)
   const timerRef = useRef<number | null>(null)
 
-  const supported =
-    typeof navigator !== "undefined" &&
-    !!navigator.mediaDevices?.getUserMedia &&
-    typeof MediaRecorder !== "undefined"
+  // Browsers remove navigator.mediaDevices on a plain http page that is not
+  // localhost, so "not supported" is usually "not https", not an old browser.
+  const unsupportedReason =
+    typeof window !== "undefined" && !window.isSecureContext
+      ? "Recording needs a secure (https) connection. Open Relay over https."
+      : typeof navigator === "undefined" ||
+          !navigator.mediaDevices?.getUserMedia ||
+          typeof MediaRecorder === "undefined" ||
+          !pickMimeType()
+        ? "This browser cannot record audio. Use a current version of Chrome, Edge, Firefox or Safari."
+        : null
+  const supported = unsupportedReason === null
 
   const start = useCallback(async () => {
     setError(null)
     setRecording(null)
     const picked = pickMimeType()
     if (!supported || !picked) {
-      setError("This browser cannot record audio. Upload a file instead.")
+      setError(unsupportedReason ?? "This browser cannot record audio.")
       return
     }
     setState("requesting")
@@ -60,7 +68,7 @@ export function useRecorder() {
     } catch {
       setState("idle")
       setError(
-        "Microphone access was refused. Allow it in the browser, or upload a file.",
+        "Microphone access was refused. Allow the microphone for this site in the browser, then press Record again.",
       )
       return
     }
@@ -94,7 +102,7 @@ export function useRecorder() {
         ),
       )
     }, 500)
-  }, [supported])
+  }, [supported, unsupportedReason])
 
   const stop = useCallback(() => {
     recorderRef.current?.stop()
@@ -114,5 +122,15 @@ export function useRecorder() {
     [],
   )
 
-  return { supported, state, error, elapsedS, recording, start, stop, reset }
+  return {
+    supported,
+    unsupportedReason,
+    state,
+    error,
+    elapsedS,
+    recording,
+    start,
+    stop,
+    reset,
+  }
 }
