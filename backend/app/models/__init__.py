@@ -3,6 +3,11 @@
 
 from sqlmodel import SQLModel
 
+from app.models.allergy_intolerance import (
+    AllergyIntolerance,
+    AllergyIntolerancePublic,
+    AllergySeverity,
+)
 from app.models.audit_log import AuditLog
 from app.models.common import (
     Message,
@@ -10,6 +15,7 @@ from app.models.common import (
     TimestampMixin,
     get_datetime_utc,
 )
+from app.models.condition import Condition, ConditionPublic, ConditionStatus
 from app.models.dashboard import (
     DashboardHandoverStatus,
     DashboardPatientPublic,
@@ -45,7 +51,19 @@ from app.models.item import (
     ItemsPublic,
     ItemUpdate,
 )
+from app.models.medication_statement import (
+    MedicationStatement,
+    MedicationStatementPublic,
+    MedicationStatus,
+)
+from app.models.observation import (
+    Observation,
+    ObservationCategory,
+    ObservationInterpretation,
+    ObservationPublic,
+)
 from app.models.patient import (
+    CodeStatus,
     Patient,
     PatientBase,
     PatientCreate,
@@ -54,6 +72,7 @@ from app.models.patient import (
     PatientUpdate,
     Sex,
 )
+from app.models.patient_location import PatientLocation, PatientLocationPublic
 from app.models.patient_record import PatientRecordCardPublic, PatientRecordPublic
 from app.models.task import (
     DueKind,
@@ -108,6 +127,7 @@ __all__ = [
     "ItemsPublic",
     "ItemUpdate",
     # patient
+    "CodeStatus",
     "Patient",
     "PatientBase",
     "PatientCreate",
@@ -117,6 +137,22 @@ __all__ = [
     "PatientRecordCardPublic",
     "PatientRecordPublic",
     "Sex",
+    # patient clinical record (FHIR-shaped)
+    "AllergyIntolerance",
+    "AllergyIntolerancePublic",
+    "AllergySeverity",
+    "Condition",
+    "ConditionPublic",
+    "ConditionStatus",
+    "MedicationStatement",
+    "MedicationStatementPublic",
+    "MedicationStatus",
+    "Observation",
+    "ObservationCategory",
+    "ObservationInterpretation",
+    "ObservationPublic",
+    "PatientLocation",
+    "PatientLocationPublic",
     # handover
     "Handover",
     "HandoverDetailPublic",
