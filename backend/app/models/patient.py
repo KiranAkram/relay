@@ -9,7 +9,7 @@ import uuid
 from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, Index, String, text
 from sqlmodel import Field, SQLModel
 
 from app.models.common import SoftDeleteMixin, TimestampMixin
@@ -21,6 +21,15 @@ class Sex(StrEnum):
     female = "female"
     other = "other"
     unknown = "unknown"
+
+
+# Resuscitation status as the ward records it. Stored on the patient for the
+# prototype; FHIR models it as a Consent/Flag resource.
+class CodeStatus(StrEnum):
+    full_code = "full_code"
+    dnr = "dnr"  # do not attempt resuscitation
+    dnr_dni = "dnr_dni"  # ... and do not intubate
+    comfort_care = "comfort_care"
 
 
 # Shared properties
@@ -38,6 +47,13 @@ class PatientBase(SQLModel):
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+    code_status: CodeStatus = Field(
+        default=CodeStatus.full_code,
+        sa_type=String(16),  # type: ignore
+    )
+    # True for every fabricated record (seed). No real PHI is ever marked False
+    # by accident: only an admin creating a real patient leaves it False.
+    synthetic: bool = False
     # False once discharged; the census is `active AND deleted_at IS NULL`.
     active: bool = True
 
@@ -59,11 +75,23 @@ class PatientUpdate(SQLModel):
     admitting_diagnosis: str | None = Field(default=None, max_length=512)
     attending_name: str | None = Field(default=None, max_length=128)
     admitted_at: datetime | None = None
+    code_status: CodeStatus | None = None
     active: bool | None = None
 
 
 # Database model, database table inferred from class name
 class Patient(PatientBase, TimestampMixin, SoftDeleteMixin, table=True):
+    # One patient per bed: the database refuses a second active, undeleted
+    # patient in an occupied bed. Discharged or deleted rows free the bed.
+    __table_args__ = (
+        Index(
+            "ux_patient_bed_active",
+            "bed",
+            unique=True,
+            postgresql_where=text("active AND deleted_at IS NULL"),
+        ),
+    )
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
 
