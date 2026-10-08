@@ -60,8 +60,8 @@ class Settings(BaseSettings):
     # Extraction (LLM). `fake` needs no key and is what CI runs with.
     LLM_PROVIDER: Literal["fake", "openai"] = "fake"
     OPENAI_API_KEY: str | None = None
-    LLM_MODEL: str = "gpt-5-nano"
-    EXTRACTION_PROMPT_VERSION: str = "v1"
+    LLM_MODEL: str = "gpt-5-mini"
+    EXTRACTION_PROMPT_VERSION: str = "v2"
     HOSPITAL_TIMEZONE: str = "Asia/Karachi"
 
     # Speech-to-text. `fake` returns a canned transcript.

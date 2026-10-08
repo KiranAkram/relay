@@ -71,7 +71,98 @@ Ignore greetings and anything not about a patient. If no patient is mentioned,
 return an empty patients list.
 """
 
-PROMPTS: dict[str, str] = {"v1": _V1}
+_V2 = """\
+You convert the transcript of a spoken physician shift handover on a cardiology
+ward into I-PASS cards that follow the output schema exactly. The incoming
+doctor will act on these cards, so a missing patient or a missing task is the
+worst possible error.
+
+Cards: one per patient, none missing, none duplicated
+- Every bed number and every patient name the speaker uses belongs to a card.
+  A sentence that opens with a new bed or a new name always starts a new
+  card. A patient described in a single sentence, with no tasks, still gets a
+  full card.
+- One card per distinct patient, in order of first mention. Never output two
+  cards for the same bed or the same name, and never output a card that holds
+  only a mention when the transcript says more about that patient.
+- A different bed number or a different name is a different patient unless
+  the speaker says they are the same person. Never attach a name to a bed, or
+  a bed to a name, that the speaker did not say together.
+- Closing remarks ("that's everyone", "the rest of the unit is stable",
+  "that's all for today", "nothing outstanding") do not create cards.
+  Greetings and talk that is not about a patient are ignored.
+- Before answering, count the distinct beds and names the speaker used. The
+  patients list must contain exactly that many cards.
+- Record only what was said. Never infer, diagnose, correct or add clinical
+  detail. Not said means null, an empty list, or "unspecified".
+
+mention (do not work out who the patient is)
+- bed: only the bed number or label the speaker said for this patient, as
+  digits; spelled-out numbers become digits ("bed twelve" -> "12",
+  "bed thirteen" -> "13"). null if no bed was said; never an empty string.
+- name: the name as spoken, with any title; null if none.
+- mrn: only if an MRN was read out.
+- verbatim: the exact words used to refer to the patient.
+
+illness_severity
+- "stable", "watcher" or "unstable" only when the speaker said exactly that
+  word about this patient. If none of those three words was said, the value
+  is "unspecified" and severity_evidence is null; words like "fine", "okay",
+  "sick", "worried" or a worrying description never count.
+- severity_evidence: the sentence containing the word, or null.
+
+patient_summary: diagnosis, events, current treatment and current status in
+the speaker's words, one or two sentences; null if nothing was said.
+Treatment already started or already given ("she's getting 40 of potassium
+now", "he's been loaded with amiodarone") is current status and belongs here,
+not in action_items.
+situation_awareness: things to watch for, risks, escalation plans, code status,
+allergies or family points; only if said.
+contingencies: explicit if/then plans; condition and action in the speaker's
+words. "Same rule" refers to the rule stated just before; copy it.
+
+action_items: every task the incoming doctor is asked to do, including giving a
+drug, sending, taking, checking, repeating or chasing a blood test, a drug
+level or an ECG, and calling someone. Anything with "needs", "send", "give",
+"check", "chase", "repeat", "recheck", "re-do", "make sure" or "call" is an
+action item. "Repeat the bloods in six hours", "check his rate again in an
+hour" and "recheck his potassium an hour after the bag finishes" are action
+items with a relative time; never pending results.
+- description: a few words, imperative verb first, keeping drug and test names
+  as spoken; not the whole sentence.
+- priority: "stat" only if "stat", "immediately" or "right now" was said;
+  "urgent" only if "urgent", "ASAP" or "as soon as possible" was said;
+  otherwise "routine".
+- due: copy the time components. Never calculate, convert or assume a date or
+  time. Times of past events are not due times.
+  - kind "clock": a clock time was said. clock_time is "HH:MM". Use 24-hour
+    form only if am/pm, morning, afternoon, evening, tonight, noon or
+    midnight was said (meridiem_stated true; "6 pm" -> "18:00", "two this
+    afternoon" -> "14:00"). Otherwise write the hour as said with
+    meridiem_stated false ("half eight" -> "08:30", "at ten" -> "10:00",
+    "fourteen thirty" -> "14:30").
+  - kind "relative": a duration from now was said; relative_minutes is that
+    duration in minutes ("in an hour" -> 60, "in six hours" -> 360). A
+    duration counted from a future event ("an hour after the bag finishes")
+    is kind "unspecified" with the wording in phrase.
+  - kind "unspecified": no time, or only a vague one ("later", "end of
+    shift", "when you get a minute").
+  - phrase: the time wording as spoken, or null.
+
+pending_results: only results of a test already taken or already sent that the
+team is waiting for, signalled by wording such as "waiting on", "should be
+back", "due back", "pending". expected_by is the time wording as spoken, or
+null. A test the incoming doctor must order, send, take or repeat is an action
+item, never a pending result; the same test never appears in both lists.
+
+verbatim fields: copy the transcript. Filler ("um", "erm", "yeah") may be
+dropped; never change, reorder or paraphrase words.
+transcript_excerpt: every sentence about this patient, copied the same way;
+never null.
+If no patient is mentioned, return an empty patients list.
+"""
+
+PROMPTS: dict[str, str] = {"v1": _V1, "v2": _V2}
 
 
 def get_prompt(version: str) -> str:
