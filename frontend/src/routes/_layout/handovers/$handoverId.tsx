@@ -139,6 +139,21 @@ function HandoverPage() {
         </Alert>
       )}
 
+      {data.status === "rejected" && (
+        <Alert variant="destructive">
+          <AlertTriangle />
+          <AlertTitle>This recording is not a clinical handover</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>
+              Nothing was extracted and no patient record was touched. Record
+              the handover again from the New handover page, and discard this
+              one.
+            </p>
+            <code className="text-xs">{data.last_error}</code>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {unresolved.length > 0 && reviewing && (
         <Alert variant="destructive">
           <AlertTriangle />

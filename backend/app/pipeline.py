@@ -15,6 +15,7 @@ from pathlib import Path
 
 from sqlmodel import Session, col, select
 
+from app import audit
 from app.core.config import settings
 from app.core.db import engine
 from app.extraction.extractor import Extractor, get_extractor
@@ -22,6 +23,7 @@ from app.extraction.matching import match_mention
 from app.extraction.resolve import resolve_action_item
 from app.extraction.schema import PatientCard
 from app.models import Handover, HandoverPatient, HandoverStatus, Patient
+from app.services.intent import IntentChecker, get_intent_checker
 from app.services.storage import Storage, get_storage
 from app.services.stt import Transcriber, get_transcriber
 
@@ -35,6 +37,7 @@ def process_handover(
     storage: Storage | None = None,
     transcriber: Transcriber | None = None,
     extractor: Extractor | None = None,
+    intent_checker: IntentChecker | None = None,
 ) -> None:
     """Run the pipeline for one handover. Providers default to the configured ones."""
     if session is None:
@@ -45,6 +48,7 @@ def process_handover(
                 storage=storage,
                 transcriber=transcriber,
                 extractor=extractor,
+                intent_checker=intent_checker,
             )
         return
 
@@ -64,6 +68,7 @@ def process_handover(
             storage or get_storage(settings),
             transcriber or get_transcriber(settings),
             extractor or get_extractor(settings),
+            intent_checker or get_intent_checker(settings),
         )
     except Exception as exc:
         logger.exception(
@@ -84,6 +89,7 @@ def _run(
     storage: Storage,
     transcriber: Transcriber,
     extractor: Extractor,
+    intent_checker: IntentChecker,
 ) -> None:
     _set_status(session, handover, HandoverStatus.transcribing)
     census = list(
@@ -101,6 +107,30 @@ def _run(
     handover.transcript_provider = settings.STT_PROVIDER
     handover.transcript_model = _model_label(settings.STT_PROVIDER, settings.STT_MODEL)
     _log_stage("transcribed", handover, stage, chars=len(handover.transcript_text))
+
+    # Intent gate: only a clinical handover goes on to extraction. A rejection
+    # is final (no cards, no retry); the author sees the reason and may discard.
+    stage = time.perf_counter()
+    intent = intent_checker.check(handover.transcript_text)
+    handover.intent_probability = intent.probability
+    handover.intent_model = intent.model
+    _log_stage("intent", handover, stage, accepted=int(intent.is_handover))
+    if not intent.is_handover:
+        handover.last_error = f"Not a clinical handover: {intent.reason}"
+        audit.record(
+            session,
+            "handover.rejected",
+            "handover",
+            actor_id=None,
+            handover_id=handover.id,
+            entity_id=handover.id,
+            details={
+                "probability": round(intent.probability, 3),
+                "reason": intent.reason,
+            },
+        )
+        _set_status(session, handover, HandoverStatus.rejected)
+        return
     _set_status(session, handover, HandoverStatus.extracting)
 
     stage = time.perf_counter()

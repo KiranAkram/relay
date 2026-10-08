@@ -8,6 +8,7 @@ from pathlib import Path
 from sqlmodel import Session, col, select
 
 from app.models import (
+    AuditLog,
     Handover,
     HandoverPatient,
     HandoverStatus,
@@ -16,6 +17,7 @@ from app.models import (
 )
 from app.pipeline import process_handover
 from app.seed.patients import seed_patients
+from app.services.intent import FakeIntentChecker
 from app.services.storage import LocalDirStorage, audio_key
 from app.services.stt import DEMO_TRANSCRIPT, TranscriptionError
 from tests.utils.user import create_random_user
@@ -141,3 +143,32 @@ def test_rerun_replaces_previous_draft_cards(db: Session, tmp_path: Path) -> Non
 
 def test_missing_handover_is_a_noop(db: Session) -> None:
     process_handover(uuid.uuid4(), session=db)
+
+
+def test_rejected_transcript_stops_before_extraction(
+    db: Session, tmp_path: Path
+) -> None:
+    storage = LocalDirStorage(tmp_path)
+    handover = _handover_with_audio(db, storage)
+
+    process_handover(
+        handover.id,
+        session=db,
+        storage=storage,
+        intent_checker=FakeIntentChecker(probability=0.2),
+    )
+    db.refresh(handover)
+    assert handover.status == HandoverStatus.rejected
+    assert handover.transcript_text == DEMO_TRANSCRIPT  # kept for the author
+    assert handover.intent_probability == 0.2
+    assert handover.extraction_raw is None
+    assert handover.last_error is not None
+    assert "0.20 below 0.80" in handover.last_error
+    assert _live_cards(db, handover) == []
+    rejected = db.exec(
+        select(AuditLog).where(
+            AuditLog.action == "handover.rejected",
+            AuditLog.handover_id == handover.id,
+        )
+    ).all()
+    assert len(rejected) == 1 and rejected[0].actor_id is None

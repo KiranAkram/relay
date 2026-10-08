@@ -318,6 +318,10 @@ export type HandoverDetailPublic = {
      */
     transcript_text: string | null;
     /**
+     * Intent Probability
+     */
+    intent_probability: number | null;
+    /**
      * Attempts
      */
     attempts: number;
@@ -488,6 +492,10 @@ export type HandoverPublic = {
      */
     transcript_text: string | null;
     /**
+     * Intent Probability
+     */
+    intent_probability: number | null;
+    /**
      * Attempts
      */
     attempts: number;
@@ -516,7 +524,7 @@ export type HandoverPublic = {
 /**
  * HandoverStatus
  */
-export type HandoverStatus = 'uploaded' | 'transcribing' | 'extracting' | 'matching' | 'awaiting_review' | 'confirmed' | 'failed' | 'discarded';
+export type HandoverStatus = 'uploaded' | 'transcribing' | 'extracting' | 'matching' | 'awaiting_review' | 'confirmed' | 'failed' | 'rejected' | 'discarded';
 
 /**
  * HandoversPublic

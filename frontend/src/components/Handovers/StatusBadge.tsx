@@ -16,6 +16,7 @@ const LABELS: Record<HandoverStatus, string> = {
   awaiting_review: "Awaiting review",
   confirmed: "Confirmed",
   failed: "Failed",
+  rejected: "Not a handover",
   discarded: "Discarded",
 }
 
@@ -30,6 +31,7 @@ const VARIANTS: Record<
   awaiting_review: "default",
   confirmed: "outline",
   failed: "destructive",
+  rejected: "destructive",
   discarded: "outline",
 }
 
