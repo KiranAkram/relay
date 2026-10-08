@@ -31,12 +31,17 @@ def upload(
     filename: str = "handover.m4a",
     data: bytes = b"not really audio",
     recorded_at: str = RECORDED_AT.isoformat(),
+    duration_s: float = 45,
 ) -> Response:
     return client.post(
         f"{URL}/",
         headers=headers,
         files={"file": (filename, data, "audio/mp4")},
-        data={"recorded_at": recorded_at, "shift_label": "night"},
+        data={
+            "recorded_at": recorded_at,
+            "shift_label": "night",
+            "duration_s": str(duration_s),
+        },
     )
 
 

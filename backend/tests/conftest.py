@@ -23,6 +23,7 @@ from app.models import (
     Patient,
     PatientLocation,
     Task,
+    UsageCounter,
     User,
 )
 from app.pipeline import process_handover
@@ -31,6 +32,20 @@ from app.services.jobs import SyncRunner
 from app.services.storage import LocalDirStorage
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
+
+
+@pytest.fixture(scope="session", autouse=True)
+def demo_limits_off() -> Generator[None]:
+    """The suite uploads far more than a demo visitor may; the quota tests
+    set the real limits back for themselves."""
+    saved = (
+        settings.VISITOR_RECORDINGS_PER_DAY,
+        settings.TRANSCRIPTION_MINUTES_PER_DAY,
+    )
+    settings.VISITOR_RECORDINGS_PER_DAY = 10_000
+    settings.TRANSCRIPTION_MINUTES_PER_DAY = 100_000
+    yield
+    settings.VISITOR_RECORDINGS_PER_DAY, settings.TRANSCRIPTION_MINUTES_PER_DAY = saved
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -54,6 +69,7 @@ def db() -> Generator[Session]:
             Observation,
             PatientLocation,
             Patient,
+            UsageCounter,
             User,
         ):
             session.execute(delete(model))

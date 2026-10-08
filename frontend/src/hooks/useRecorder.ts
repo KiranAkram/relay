@@ -29,8 +29,11 @@ function clearTimer(ref: { current: number | null }) {
   }
 }
 
-/** Microphone recording through the browser's MediaRecorder. */
-export function useRecorder() {
+/**
+ * Microphone recording through the browser's MediaRecorder.
+ * Stops on its own at `maxSeconds` (the server refuses anything longer).
+ */
+export function useRecorder({ maxSeconds }: { maxSeconds: number }) {
   const [state, setState] = useState<RecorderState>("idle")
   const [error, setError] = useState<string | null>(null)
   const [elapsedS, setElapsedS] = useState(0)
@@ -39,6 +42,8 @@ export function useRecorder() {
   const chunksRef = useRef<Blob[]>([])
   const startedAtRef = useRef<Date | null>(null)
   const timerRef = useRef<number | null>(null)
+  const maxSecondsRef = useRef(maxSeconds)
+  maxSecondsRef.current = maxSeconds
 
   // Browsers remove navigator.mediaDevices on a plain http page that is not
   // localhost, so "not supported" is usually "not https", not an old browser.
@@ -52,6 +57,10 @@ export function useRecorder() {
         ? "This browser cannot record audio. Use a current version of Chrome, Edge, Firefox or Safari."
         : null
   const supported = unsupportedReason === null
+
+  const stop = useCallback(() => {
+    if (recorderRef.current?.state === "recording") recorderRef.current.stop()
+  }, [])
 
   const start = useCallback(async () => {
     setError(null)
@@ -82,11 +91,16 @@ export function useRecorder() {
       clearTimer(timerRef)
       const startedAt = startedAtRef.current ?? new Date()
       const blob = new Blob(chunksRef.current, { type: picked.mime })
+      const elapsed = (Date.now() - startedAt.getTime()) / 1000
       setRecording({
         blob,
         filename: `handover.${picked.ext}`,
         startedAt,
-        durationS: Math.round((Date.now() - startedAt.getTime()) / 1000),
+        // Never above the cap, never zero: the server validates both.
+        durationS: Math.min(
+          Math.max(Math.round(elapsed), 1),
+          maxSecondsRef.current,
+        ),
       })
       setState("done")
     }
@@ -96,17 +110,13 @@ export function useRecorder() {
     recorder.start(1000)
     setState("recording")
     timerRef.current = window.setInterval(() => {
-      setElapsedS(
-        Math.round(
-          (Date.now() - (startedAtRef.current?.getTime() ?? 0)) / 1000,
-        ),
+      const elapsed = Math.round(
+        (Date.now() - (startedAtRef.current?.getTime() ?? 0)) / 1000,
       )
+      setElapsedS(elapsed)
+      if (elapsed >= maxSecondsRef.current) stop()
     }, 500)
-  }, [supported, unsupportedReason])
-
-  const stop = useCallback(() => {
-    recorderRef.current?.stop()
-  }, [])
+  }, [supported, unsupportedReason, stop])
 
   const reset = useCallback(() => {
     setRecording(null)
@@ -128,6 +138,8 @@ export function useRecorder() {
     state,
     error,
     elapsedS,
+    secondsLeft: Math.max(maxSeconds - elapsedS, 0),
+    maxSeconds,
     recording,
     start,
     stop,

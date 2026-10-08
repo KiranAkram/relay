@@ -49,6 +49,10 @@ export type Body_handovers_upload_handover = {
      */
     recorded_at: string;
     /**
+     * Duration S
+     */
+    duration_s: number;
+    /**
      * Shift Label
      */
     shift_label?: string | null;
@@ -83,6 +87,11 @@ export type Body_login_login_access_token = {
      */
     client_secret?: string | null;
 };
+
+/**
+ * CodeStatus
+ */
+export type CodeStatus = 'full_code' | 'dnr' | 'dnr_dni' | 'comfort_care';
 
 /**
  * DashboardHandoverStatus
@@ -700,6 +709,11 @@ export type PatientCreate = {
      * Admitted At
      */
     admitted_at?: string | null;
+    code_status?: CodeStatus;
+    /**
+     * Synthetic
+     */
+    synthetic?: boolean;
     /**
      * Active
      */
@@ -747,6 +761,11 @@ export type PatientPublic = {
      * Admitted At
      */
     admitted_at?: string | null;
+    code_status?: CodeStatus;
+    /**
+     * Synthetic
+     */
+    synthetic?: boolean;
     /**
      * Active
      */
@@ -856,6 +875,7 @@ export type PatientUpdate = {
      * Admitted At
      */
     admitted_at?: string | null;
+    code_status?: CodeStatus | null;
     /**
      * Active
      */
@@ -896,6 +916,30 @@ export type PrivateUserCreate = {
      * Is Verified
      */
     is_verified?: boolean;
+};
+
+/**
+ * QuotaPublic
+ *
+ * What the Record page needs to show before the doctor presses Record.
+ */
+export type QuotaPublic = {
+    /**
+     * Recording Max Seconds
+     */
+    recording_max_seconds: number;
+    /**
+     * Visitor Recordings Left
+     */
+    visitor_recordings_left: number;
+    /**
+     * Global Seconds Left
+     */
+    global_seconds_left: number;
+    /**
+     * Resets At
+     */
+    resets_at: string;
 };
 
 /**
@@ -1776,6 +1820,22 @@ export type itemsUpdateItemResponses = {
 };
 
 export type itemsUpdateItemResponse = itemsUpdateItemResponses[keyof itemsUpdateItemResponses];
+
+export type handoversReadQuotaData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/handovers/quota';
+};
+
+export type handoversReadQuotaResponses = {
+    /**
+     * Successful Response
+     */
+    200: QuotaPublic;
+};
+
+export type handoversReadQuotaResponse = handoversReadQuotaResponses[keyof handoversReadQuotaResponses];
 
 export type handoversReadHandoversData = {
     body?: never;

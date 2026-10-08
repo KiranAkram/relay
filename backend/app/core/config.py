@@ -77,6 +77,15 @@ class Settings(BaseSettings):
     JOB_RUNNER: Literal["inprocess", "sync"] = "inprocess"
     # Confirm creates a `task_due_soon` flag this many minutes before a task is due.
     ALERT_LEAD_MINUTES: int = 15
+    # Demo abuse limits (owner's values, 8 Oct 2026). A recording is cut at
+    # RECORDING_MAX_SECONDS in the browser and refused above it on the server;
+    # each visitor (signed cookie, and separately the IP address) may send
+    # VISITOR_RECORDINGS_PER_DAY recordings; TRANSCRIPTION_MINUTES_PER_DAY caps
+    # the audio the whole deployment sends to transcription per day. Days roll
+    # over at midnight in HOSPITAL_TIMEZONE.
+    RECORDING_MAX_SECONDS: int = 120
+    VISITOR_RECORDINGS_PER_DAY: int = 3
+    TRANSCRIPTION_MINUTES_PER_DAY: int = 30
     # INFO everywhere by default; set DEBUG by hand when needed (DEBUG may log
     # transcript text, which must not reach a shared log in production).
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"

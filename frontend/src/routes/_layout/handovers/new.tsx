@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Mic, RotateCcw, Square } from "lucide-react"
 import { useState } from "react"
@@ -26,6 +26,9 @@ export const Route = createFileRoute("/_layout/handovers/new")({
   }),
 })
 
+// Matches the server default; the quota response overrides it once loaded.
+const DEFAULT_MAX_SECONDS = 120
+
 const mmss = (s: number) =>
   `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
 
@@ -33,15 +36,39 @@ function NewHandover() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { showErrorToast } = useCustomToast()
-  const recorder = useRecorder()
   const [shiftLabel, setShiftLabel] = useState("")
 
+  const quota = useQuery({
+    queryKey: ["handovers", "quota"],
+    queryFn: () => HandoversService.readQuota(),
+    select: (response) => response.data,
+  })
+  const maxSeconds = quota.data?.recording_max_seconds ?? DEFAULT_MAX_SECONDS
+  const recorder = useRecorder({ maxSeconds })
+
+  const limitReached =
+    quota.data !== undefined &&
+    (quota.data.visitor_recordings_left === 0 ||
+      quota.data.global_seconds_left <= 0)
+  const resetsAt = quota.data
+    ? new Date(quota.data.resets_at).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null
+
   const upload = useMutation({
-    mutationFn: (args: { file: Blob; filename: string; recordedAt: Date }) =>
+    mutationFn: (args: {
+      file: Blob
+      filename: string
+      recordedAt: Date
+      durationS: number
+    }) =>
       HandoversService.uploadHandover({
         body: {
           file: new File([args.file], args.filename, { type: args.file.type }),
           recorded_at: args.recordedAt.toISOString(),
+          duration_s: args.durationS,
           shift_label: shiftLabel.trim() || null,
         },
       }),
@@ -52,7 +79,10 @@ function NewHandover() {
         params: { handoverId: response.data.id },
       })
     },
-    onError: handleError.bind(showErrorToast),
+    onError: (err: Error) => {
+      handleError.call(showErrorToast, err)
+      queryClient.invalidateQueries({ queryKey: ["handovers", "quota"] })
+    },
   })
 
   return (
@@ -71,18 +101,31 @@ function NewHandover() {
             <CardTitle>Record</CardTitle>
             <CardDescription>
               {recorder.state === "recording"
-                ? "Recording. Press Stop when you have covered every patient."
+                ? `Recording. Press Stop when you have covered every patient; it stops on its own at ${mmss(maxSeconds)}.`
                 : recorder.state === "done"
                   ? "Listen back, then send it for processing."
-                  : "Press Record and start with the first patient."}
+                  : `Press Record and start with the first patient. Up to ${mmss(maxSeconds)}.`}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-6 py-8">
-            <div className="font-mono text-5xl tabular-nums">
-              {mmss(
-                recorder.state === "done" && recorder.recording
-                  ? recorder.recording.durationS
-                  : recorder.elapsedS,
+            <div className="flex flex-col items-center">
+              <div className="font-mono text-5xl tabular-nums">
+                {mmss(
+                  recorder.state === "done" && recorder.recording
+                    ? recorder.recording.durationS
+                    : recorder.elapsedS,
+                )}
+              </div>
+              {recorder.state === "recording" && (
+                <div
+                  className={`mt-1 font-mono text-sm tabular-nums ${
+                    recorder.secondsLeft <= 15
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {mmss(recorder.secondsLeft)} left
+                </div>
               )}
             </div>
 
@@ -92,7 +135,9 @@ function NewHandover() {
                 className="h-14 px-8 text-base"
                 onClick={() => recorder.start()}
                 disabled={
-                  !recorder.supported || recorder.state === "requesting"
+                  !recorder.supported ||
+                  recorder.state === "requesting" ||
+                  limitReached
                 }
               >
                 <Mic className="size-5" />
@@ -125,12 +170,14 @@ function NewHandover() {
                     <LoadingButton
                       size="lg"
                       loading={upload.isPending}
+                      disabled={limitReached}
                       onClick={() =>
                         recorder.recording &&
                         upload.mutate({
                           file: recorder.recording.blob,
                           filename: recorder.recording.filename,
                           recordedAt: recorder.recording.startedAt,
+                          durationS: recorder.recording.durationS,
                         })
                       }
                     >
@@ -141,6 +188,12 @@ function NewHandover() {
               )
             )}
 
+            {limitReached && (
+              <p className="text-sm text-destructive">
+                Demo limit reached for today
+                {resetsAt ? `; it resets at ${resetsAt}.` : "."}
+              </p>
+            )}
             {recorder.unsupportedReason && (
               <p className="text-sm text-destructive">
                 {recorder.unsupportedReason}
@@ -154,6 +207,13 @@ function NewHandover() {
               <p className="text-xs text-muted-foreground">
                 Recorded at {recorder.recording.startedAt.toLocaleTimeString()}.
                 Due times like “in an hour” count from this moment.
+              </p>
+            )}
+            {quota.data && !limitReached && recorder.state !== "recording" && (
+              <p className="text-xs text-muted-foreground">
+                Demo: {quota.data.visitor_recordings_left} recording
+                {quota.data.visitor_recordings_left === 1 ? "" : "s"} left for
+                you today.
               </p>
             )}
           </CardContent>
