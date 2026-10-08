@@ -68,6 +68,15 @@ class Settings(BaseSettings):
     STT_PROVIDER: Literal["fake", "openai"] = "fake"
     STT_MODEL: str = "gpt-transcribe"
 
+    # Intent gate between transcription and extraction: is this transcript a
+    # spoken clinical shift handover at all? `jev` is TypeSafe AI's decision
+    # model (typed yes/no with a probability, no prose). `fake` says yes.
+    # Below INTENT_THRESHOLD the handover is `rejected`: no cards, no retry.
+    INTENT_PROVIDER: Literal["fake", "jev"] = "fake"
+    INTENT_MODEL: str = "jev-latest"
+    INTENT_THRESHOLD: float = 0.8
+    TYPESAFE_API_KEY: str | None = None
+
     # Recordings. `local` keeps files under STORAGE_LOCAL_DIR (relative to the
     # backend working directory); S3/MinIO arrive with the AWS move.
     STORAGE_PROVIDER: Literal["local"] = "local"
@@ -105,6 +114,10 @@ class Settings(BaseSettings):
             raise ValueError(
                 "OPENAI_API_KEY is required when LLM_PROVIDER or STT_PROVIDER is openai"
             )
+        if self.INTENT_PROVIDER == "jev" and not self.TYPESAFE_API_KEY:
+            raise ValueError("TYPESAFE_API_KEY is required when INTENT_PROVIDER is jev")
+        if not 0 < self.INTENT_THRESHOLD <= 1:
+            raise ValueError("INTENT_THRESHOLD must be between 0 and 1")
         return self
 
     @property

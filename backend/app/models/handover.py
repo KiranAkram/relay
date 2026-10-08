@@ -30,6 +30,9 @@ class HandoverStatus(StrEnum):
     awaiting_review = "awaiting_review"
     confirmed = "confirmed"
     failed = "failed"
+    # The transcript is not a clinical handover (intent gate). Final: no cards,
+    # no retry; the author may discard it.
+    rejected = "rejected"
     discarded = "discarded"
 
 
@@ -57,6 +60,10 @@ class Handover(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     transcript_text: str | None = Field(default=None, sa_type=Text)
     transcript_provider: str | None = Field(default=None, max_length=64)
     transcript_model: str | None = Field(default=None, max_length=64)
+
+    # Intent gate: probability that the transcript is a clinical handover.
+    intent_probability: float | None = None
+    intent_model: str | None = Field(default=None, max_length=64)
 
     # LLM extraction output, exactly as returned (immutable; edits go on handover_patient)
     extraction_raw: dict[str, Any] | None = Field(default=None, sa_type=JSONB)
@@ -93,6 +100,7 @@ class HandoverPublic(SQLModel):
     shift_label: str | None
     audio_content_type: str
     transcript_text: str | None
+    intent_probability: float | None
     attempts: int
     last_error: str | None
     confirmed_at: datetime | None
