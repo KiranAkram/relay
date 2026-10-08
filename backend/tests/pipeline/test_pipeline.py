@@ -79,7 +79,7 @@ def test_process_handover_writes_transcript_extraction_and_draft_cards(
     assert handover.transcript_provider == "fake"
     assert handover.extraction_raw is not None
     assert len(handover.extraction_raw["patients"]) == 2
-    assert handover.extraction_prompt_version == "v1"
+    assert handover.extraction_prompt_version == "v2"
 
     bed_7, khan = _live_cards(db, handover)
     assert bed_7.order_index == 0
