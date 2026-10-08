@@ -11,12 +11,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Form, HTTPException, Request, Response, UploadFile
 from sqlmodel import col, func, select
 
 from app import audit
 from app.api.deps import CurrentUser, JobRunnerDep, SessionDep, StorageDep, is_admin
 from app.core.config import settings
+from app.core.visitor import client_ip, visitor_id
 from app.models import (
     ActionItemDraft,
     DocumentReference,
@@ -35,9 +36,12 @@ from app.models import (
     MatchStatus,
     Message,
     Patient,
+    QuotaPublic,
     Task,
     User,
 )
+from app.services import quota
+from app.services.audio import measure_duration_s
 from app.services.storage import audio_key
 from app.services.stt import AUDIO_SUFFIXES, MAX_AUDIO_BYTES
 
@@ -50,6 +54,25 @@ RECORDED_AT_MAX_FUTURE = timedelta(hours=24)
 RECORDED_AT_MAX_PAST = timedelta(days=7)
 
 
+@router.get("/quota", response_model=QuotaPublic)
+def read_quota(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001 — any logged-in doctor
+    request: Request,
+    response: Response,
+) -> Any:
+    """
+    What this visitor may still record today (demo limits).
+    """
+    return quota.snapshot(
+        session,
+        settings,
+        visitor=visitor_id(request, response),
+        ip=client_ip(request),
+    )
+
+
 @router.post("/", status_code=202, response_model=HandoverPublic)
 def upload_handover(
     *,
@@ -57,14 +80,25 @@ def upload_handover(
     current_user: CurrentUser,
     storage: StorageDep,
     job_runner: JobRunnerDep,
+    request: Request,
+    response: Response,
     file: UploadFile,
     recorded_at: Annotated[datetime, Form()],
+    duration_s: Annotated[float, Form(gt=0)],
     shift_label: Annotated[str | None, Form(max_length=64)] = None,
 ) -> Any:
     """
-    Upload a recording and start the pipeline.
+    Receive the browser recording and start the pipeline.
+
+    `duration_s` is what the recorder measured; it is checked against the
+    recording cap and, when ffmpeg is installed, against the audio itself.
     """
     filename = file.filename or ""
+    if duration_s > settings.RECORDING_MAX_SECONDS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Recording longer than {settings.RECORDING_MAX_SECONDS} seconds",
+        )
     suffix = Path(filename).suffix.lower()
     if suffix not in AUDIO_SUFFIXES:
         raise HTTPException(
@@ -94,6 +128,22 @@ def upload_handover(
         )
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
+    # The client is not trusted for a limit that costs money: measure when we can.
+    measured = measure_duration_s(data)
+    if measured is not None and measured > settings.RECORDING_MAX_SECONDS + 1:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Recording longer than {settings.RECORDING_MAX_SECONDS} seconds",
+        )
+    audio_seconds = measured if measured is not None else duration_s
+    # Locks and increments the counters in this transaction; 429 if exhausted.
+    quota.reserve(
+        session,
+        settings,
+        visitor=visitor_id(request, response),
+        ip=client_ip(request),
+        seconds=audio_seconds,
+    )
 
     handover = Handover(
         author_id=current_user.id,
@@ -101,6 +151,7 @@ def upload_handover(
         shift_label=shift_label,
         audio_key="",
         audio_content_type=file.content_type or "application/octet-stream",
+        audio_duration_s=audio_seconds,
     )
     handover.audio_key = audio_key(handover.id, filename)
     storage.put(handover.audio_key, data, handover.audio_content_type)
@@ -125,7 +176,12 @@ def upload_handover(
         actor_id=current_user.id,
         handover_id=handover.id,
         entity_id=handover.id,
-        details={"filename": filename, "size_bytes": len(data)},
+        details={
+            "filename": filename,
+            "size_bytes": len(data),
+            "duration_s": round(audio_seconds, 1),
+            "duration_measured": measured is not None,
+        },
     )
     session.commit()
     job_runner.submit(handover.id)

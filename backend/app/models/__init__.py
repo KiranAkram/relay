@@ -82,6 +82,7 @@ from app.models.task import (
     TaskPublic,
     TaskStatus,
 )
+from app.models.usage_counter import QuotaPublic, UsageCounter
 from app.models.user import (
     NewPassword,
     Token,
@@ -181,6 +182,9 @@ __all__ = [
     "FlagPublic",
     "FlagStatus",
     "AuditLog",
+    # demo limits
+    "QuotaPublic",
+    "UsageCounter",
     # dashboard
     "DashboardHandoverStatus",
     "DashboardPatientPublic",
