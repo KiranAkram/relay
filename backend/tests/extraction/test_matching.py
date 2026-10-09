@@ -83,16 +83,56 @@ def test_bed_and_name_agreeing_is_matched_with_both_reasons() -> None:
     assert result.candidates[0].reason == "bed exact, name fuzzy"
 
 
-def test_bed_and_name_disagreeing_is_ambiguous() -> None:
+def test_bed_and_name_disagreeing_is_ambiguous_bed_patient_first() -> None:
     mention = PatientMention(bed="7", name="Mr Khan", verbatim="Bed 7, Mr Khan")
     result = match_mention(mention, CENSUS)
     assert result.status == MatchStatus.ambiguous
     assert result.patient_id is None
-    assert {c.patient_id for c in result.candidates} == {
-        MIRZA_BAIG.id,
+    assert result.candidates[0].patient_id == MIRZA_BAIG.id
+    assert result.candidates[0].reason == "bed exact"
+    assert {c.patient_id for c in result.candidates[1:]} == {
         IMRAN_KHAN.id,
         ZUBAIDA_KHAN.id,
     }
+
+
+TARIQ_SHEIKH = _patient("MRN-100005", "Tariq", "Sheikh", "CCU-5")
+YUSUF_SHEIKH = _patient("MRN-100012", "Yusuf", "Sheikh", "CCU-12")
+KAMRAN_MIRZA = _patient("MRN-100019", "Kamran", "Mirza", "CCU-19")
+WIDER_CENSUS = [*CENSUS, TARIQ_SHEIKH, YUSUF_SHEIKH, KAMRAN_MIRZA]
+
+
+def test_bed_decides_when_surname_is_shared() -> None:
+    mention = PatientMention(bed="5", name="Sheikh", verbatim="the Sheikh in bed five")
+    result = match_mention(mention, WIDER_CENSUS)
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == TARIQ_SHEIKH.id
+    assert [c.reason for c in result.candidates] == ["bed exact, name fuzzy"]
+
+
+def test_bed_decides_when_name_is_another_patients_given_name() -> None:
+    mention = PatientMention(bed="19", name="Mr Mirza", verbatim="Mr Mirza in bed 19")
+    result = match_mention(mention, WIDER_CENSUS)
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == KAMRAN_MIRZA.id
+
+
+def test_shared_surname_without_bed_stays_ambiguous() -> None:
+    result = match_mention(
+        PatientMention(name="Mr Sheikh", verbatim="Mr Sheikh"), WIDER_CENSUS
+    )
+    assert result.status == MatchStatus.ambiguous
+    assert {c.patient_id for c in result.candidates} == {
+        TARIQ_SHEIKH.id,
+        YUSUF_SHEIKH.id,
+    }
+
+
+def test_bed_not_on_census_falls_back_to_name_as_ambiguous() -> None:
+    mention = PatientMention(bed="30", name="Mr Baig", verbatim="bed thirty, Mr Baig")
+    result = match_mention(mention, CENSUS)
+    assert result.status == MatchStatus.ambiguous
+    assert [c.patient_id for c in result.candidates] == [MIRZA_BAIG.id]
 
 
 def test_bed_hit_with_unknown_name_is_ambiguous_not_silently_matched() -> None:
