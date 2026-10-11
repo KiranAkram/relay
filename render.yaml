@@ -1,0 +1,96 @@
+# Render Blueprint for the Relay demo (owner's decisions, 11 Oct 2026):
+# Frankfurt, paid Starter web service with a 1 GB disk so recordings survive
+# deploys (kept for audit, 30-day retention comes with the retention branch),
+# paid Postgres so the database is not expired after 30 days.
+# Secrets are set in the Render dashboard, never here. The service refuses to
+# start while any of them is missing or still "changethis".
+services:
+  - type: web
+    name: relay
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/utils/health-check/
+    autoDeploy: true
+    disk:
+      name: relay-recordings
+      mountPath: /app/backend/data
+      sizeGB: 1
+    envVars:
+      - key: PROJECT_NAME
+        value: Relay
+      - key: DATABASE_URL
+        fromDatabase:
+          name: relay-db
+          property: connectionString
+      - key: FRONTEND_HOST
+        fromService:
+          type: web
+          name: relay
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SECRET_KEY
+        generateValue: true
+      # Accounts: set in the dashboard.
+      - key: FIRST_SUPERUSER
+        sync: false
+      - key: FIRST_SUPERUSER_PASSWORD
+        sync: false
+      - key: DEMO_DOCTOR_EMAIL
+        sync: false
+      - key: DEMO_DOCTOR_PASSWORD
+        sync: false
+      - key: DEMO_ACCESS_BANNER
+        value: "true"
+      - key: USERS_OPEN_REGISTRATION
+        value: "false"
+      # Models (same OpenAI key for transcription and extraction).
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        value: openai
+      - key: LLM_MODEL
+        value: gpt-5-mini
+      - key: EXTRACTION_PROMPT_VERSION
+        value: v2
+      - key: STT_PROVIDER
+        value: openai
+      - key: STT_MODEL
+        value: gpt-transcribe
+      - key: HOSPITAL_TIMEZONE
+        value: Asia/Karachi
+      # Intent gate (TypeSafe AI Jev). Synthetic census only: Jev's terms
+      # forbid real patient information.
+      - key: INTENT_PROVIDER
+        value: jev
+      - key: INTENT_MODEL
+        value: jev-latest
+      - key: INTENT_THRESHOLD
+        value: "0.8"
+      - key: TYPESAFE_API_KEY
+        sync: false
+      # Recordings on the attached disk; pipeline runs in the API process.
+      - key: STORAGE_PROVIDER
+        value: local
+      - key: STORAGE_LOCAL_DIR
+        value: data
+      - key: JOB_RUNNER
+        value: inprocess
+      - key: ALERT_LEAD_MINUTES
+        value: "15"
+      # Demo limits.
+      - key: RECORDING_MAX_SECONDS
+        value: "120"
+      - key: VISITOR_RECORDINGS_PER_DAY
+        value: "3"
+      - key: TRANSCRIPTION_MINUTES_PER_DAY
+        value: "30"
+      - key: LOG_LEVEL
+        value: INFO
+
+databases:
+  - name: relay-db
+    region: frankfurt
+    plan: basic-256mb
+    postgresMajorVersion: "18"
