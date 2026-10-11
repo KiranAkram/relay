@@ -6,6 +6,7 @@ import { useState } from "react"
 
 import { type HandoverDetailPublic, HandoversService } from "@/client"
 import { ConfirmDialog } from "@/components/Common/ConfirmDialog"
+import { RecordingPlayer } from "@/components/Handovers/RecordingPlayer"
 import { ReviewCard } from "@/components/Handovers/ReviewCard"
 import { isProcessing, StatusBadge } from "@/components/Handovers/StatusBadge"
 import PendingDashboard from "@/components/Pending/PendingDashboard"
@@ -202,6 +203,11 @@ function HandoverPage() {
           </LoadingButton>
         </div>
       )}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium">Recording</h2>
+        <RecordingPlayer handoverId={data.id} />
+      </section>
 
       {data.transcript_text && (
         <details className="rounded-md border p-4 text-sm">

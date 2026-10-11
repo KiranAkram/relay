@@ -92,11 +92,13 @@ def _run(
     intent_checker: IntentChecker,
 ) -> None:
     _set_status(session, handover, HandoverStatus.transcribing)
+    # Ordered so tied match candidates (two Khans) always appear in the same
+    # order on the review page.
     census = list(
         session.exec(
-            select(Patient).where(
-                col(Patient.active).is_(True), col(Patient.deleted_at).is_(None)
-            )
+            select(Patient)
+            .where(col(Patient.active).is_(True), col(Patient.deleted_at).is_(None))
+            .order_by(col(Patient.mrn))
         ).all()
     )
     audio = storage.get(handover.audio_key)

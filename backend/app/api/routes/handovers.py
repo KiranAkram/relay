@@ -40,9 +40,9 @@ from app.models import (
     Task,
     User,
 )
-from app.services import quota
+from app.services import quota, retention
 from app.services.audio import measure_duration_s
-from app.services.storage import audio_key
+from app.services.storage import StorageError, audio_key
 from app.services.stt import AUDIO_SUFFIXES, MAX_AUDIO_BYTES
 
 router = APIRouter(prefix="/handovers", tags=["handovers"])
@@ -185,6 +185,9 @@ def upload_handover(
     )
     session.commit()
     job_runner.submit(handover.id)
+    # No scheduler (decided): each upload purges recordings past retention, in
+    # its own transaction, so a purge problem never fails this upload.
+    retention.purge_expired(session, storage, settings)
     session.refresh(handover)
     return handover
 
@@ -221,6 +224,39 @@ def read_handover(session: SessionDep, current_user: CurrentUser, id: uuid.UUID)
     """
     handover = _get_handover(session, current_user, id)
     return _detail(session, handover)
+
+
+@router.get("/{id}/audio", response_class=Response)
+def read_handover_audio(
+    session: SessionDep, current_user: CurrentUser, storage: StorageDep, id: uuid.UUID
+) -> Response:
+    """The recording itself, for the author or an admin. 410 once purged."""
+    handover = _get_handover(session, current_user, id)
+    document = session.exec(
+        select(DocumentReference).where(
+            DocumentReference.handover_id == handover.id,
+            DocumentReference.type == DocumentType.audio,
+            col(DocumentReference.patient_id).is_(None),
+        )
+    ).first()
+    if document is not None and document.purged_at is not None:
+        raise HTTPException(
+            status_code=410,
+            detail=f"Recording purged on {document.purged_at:%Y-%m-%d} "
+            f"after {settings.AUDIO_RETENTION_DAYS} days",
+        )
+    try:
+        data = storage.get(handover.audio_key)
+    except StorageError:
+        raise HTTPException(
+            status_code=404,
+            detail="Recording is no longer available on this server",
+        ) from None
+    return Response(
+        content=data,
+        media_type=handover.audio_content_type,
+        headers={"Cache-Control": "private, no-store"},
+    )
 
 
 @router.patch("/{id}/patients/{card_id}", response_model=HandoverPatientPublic)

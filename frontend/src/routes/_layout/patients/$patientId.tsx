@@ -9,6 +9,7 @@ import {
   type TaskPublic,
 } from "@/client"
 import { SeverityBadge } from "@/components/Common/SeverityBadge"
+import { RecordingPlayer } from "@/components/Handovers/RecordingPlayer"
 import PendingDashboard from "@/components/Pending/PendingDashboard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -94,15 +95,21 @@ function RecordContent({ patientId }: { patientId: string }) {
           <h2 className="text-lg font-semibold">Recordings</h2>
           <ul className="divide-y rounded-md border text-sm">
             {data.documents.map((d) => (
-              <li key={d.id} className="flex items-center gap-3 p-3">
-                <FileAudio className="size-4 text-muted-foreground" />
-                <span>{when(d.authored_at)}</span>
-                <span className="text-muted-foreground">
-                  {d.type} · {d.content_type}
-                  {d.size_bytes
-                    ? ` · ${Math.round(d.size_bytes / 1024)} kB`
-                    : ""}
-                </span>
+              <li key={d.id} className="flex flex-col gap-2 p-3">
+                <div className="flex items-center gap-3">
+                  <FileAudio className="size-4 text-muted-foreground" />
+                  <span>{when(d.authored_at)}</span>
+                  <span className="text-muted-foreground">
+                    {d.type} · {d.content_type}
+                    {d.size_bytes
+                      ? ` · ${Math.round(d.size_bytes / 1024)} kB`
+                      : ""}
+                  </span>
+                </div>
+                <RecordingPlayer
+                  handoverId={d.handover_id}
+                  purgedAt={d.purged_at}
+                />
               </li>
             ))}
           </ul>

@@ -1,7 +1,7 @@
 """Object storage for recordings behind a small interface.
 
 `LocalDirStorage` writes under a directory on the machine running the backend
-(`STORAGE_PROVIDER=local`). An S3/MinIO implementation with the same two
+(`STORAGE_PROVIDER=local`). An S3/MinIO implementation with the same three
 methods arrives with the AWS move; handovers only ever store the key.
 """
 
@@ -20,6 +20,10 @@ class Storage(Protocol):
     def put(self, key: str, data: bytes, content_type: str) -> None: ...
 
     def get(self, key: str) -> bytes: ...
+
+    def delete(self, key: str) -> bool:
+        """Remove the object. Returns False when there was nothing to remove."""
+        ...
 
 
 class LocalDirStorage:
@@ -42,6 +46,14 @@ class LocalDirStorage:
             return self._path(key).read_bytes()
         except FileNotFoundError:
             raise StorageError(f"no object at {key!r}") from None
+
+    def delete(self, key: str) -> bool:
+        path = self._path(key)
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            return False
+        return True
 
 
 def audio_key(handover_id: uuid.UUID, filename: str) -> str:
