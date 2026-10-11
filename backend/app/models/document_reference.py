@@ -4,6 +4,11 @@ The pipeline writes handover-level rows (`patient_id` NULL) for the audio,
 transcript and extraction JSON. On confirm, one row per matched patient is
 added for the audio and transcript so each patient record carries its own
 reference, with author and timestamp.
+
+Recordings are purged after `AUDIO_RETENTION_DAYS`: the object is deleted and
+`purged_at` is stamped on every row sharing its storage key. The row itself is
+kept so the patient record still shows that a recording existed and when it
+was removed.
 """
 
 import uuid
@@ -52,6 +57,10 @@ class DocumentReference(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
         foreign_key="user.id", nullable=False, ondelete="RESTRICT"
     )
     authored_at: datetime = Field(sa_type=DateTime(timezone=True))  # type: ignore
+    purged_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
 
     handover: "Handover" = Relationship(back_populates="documents")
 
@@ -67,3 +76,4 @@ class DocumentReferencePublic(SQLModel):
     author_id: uuid.UUID
     authored_at: datetime
     created_at: datetime
+    purged_at: datetime | None

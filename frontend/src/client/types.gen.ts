@@ -216,6 +216,10 @@ export type DocumentReferencePublic = {
      * Created At
      */
     created_at: string;
+    /**
+     * Purged At
+     */
+    purged_at: string | null;
 };
 
 /**
@@ -1967,6 +1971,34 @@ export type handoversReadHandoverResponses = {
 };
 
 export type handoversReadHandoverResponse = handoversReadHandoverResponses[keyof handoversReadHandoverResponses];
+
+export type handoversReadHandoverAudioData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/handovers/{id}/audio';
+};
+
+export type handoversReadHandoverAudioErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type handoversReadHandoverAudioError = handoversReadHandoverAudioErrors[keyof handoversReadHandoverAudioErrors];
+
+export type handoversReadHandoverAudioResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type handoversDeleteCardData = {
     body?: never;

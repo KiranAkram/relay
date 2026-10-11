@@ -84,6 +84,11 @@ class Settings(BaseSettings):
     # Where process_handover runs: after the HTTP response in the API process,
     # or inline in the request (tests).
     JOB_RUNNER: Literal["inprocess", "sync"] = "inprocess"
+    # Recordings are kept this many days after they entered storage, for audit
+    # (owner's decision, 11 Oct 2026), then purged by the next upload: the file
+    # is deleted, the document reference stays and is stamped `purged_at`.
+    # Production answer: an S3 lifecycle rule with the same number.
+    AUDIO_RETENTION_DAYS: int = 30
     # Confirm creates a `task_due_soon` flag this many minutes before a task is due.
     ALERT_LEAD_MINUTES: int = 15
     # Demo abuse limits (owner's values, 8 Oct 2026). A recording is cut at

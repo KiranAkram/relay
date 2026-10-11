@@ -49,3 +49,16 @@ def test_audio_key_uses_handover_id_and_lowercased_suffix() -> None:
 def test_get_storage_uses_configured_dir() -> None:
     storage = get_storage(settings.model_copy(update={"STORAGE_LOCAL_DIR": "some/dir"}))
     assert isinstance(storage, LocalDirStorage)
+
+
+def test_delete_removes_object_and_reports_missing(tmp_path: Path) -> None:
+    storage = LocalDirStorage(tmp_path)
+    storage.put("handovers/abc/audio.webm", b"audio", "audio/webm")
+    assert storage.delete("handovers/abc/audio.webm") is True
+    assert not (tmp_path / "handovers" / "abc" / "audio.webm").exists()
+    assert storage.delete("handovers/abc/audio.webm") is False
+
+
+def test_delete_rejects_keys_outside_root(tmp_path: Path) -> None:
+    with pytest.raises(StorageError, match="invalid storage key"):
+        LocalDirStorage(tmp_path).delete("../escape.txt")
