@@ -1,7 +1,7 @@
 # Render Blueprint for the Relay demo (owner's decisions, 11 Oct 2026):
-# Singapore, paid Starter web service with a 1 GB disk so recordings survive
-# deploys (kept for audit, 30-day retention comes with the retention branch),
-# paid Postgres so the database is not expired after 30 days.
+# Singapore, free plans. Free services have no persistent disk, so recordings
+# live on the container's own disk and are gone at every deploy or restart;
+# the free Postgres is deleted by Render 30 days after creation. Demo only.
 # Secrets are set in the Render dashboard, never here. The service refuses to
 # start while any of them is missing or still "changethis".
 services:
@@ -9,15 +9,11 @@ services:
     name: relay
     runtime: docker
     region: singapore
-    plan: starter
+    plan: free
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/utils/health-check/
     autoDeploy: true
-    disk:
-      name: relay-recordings
-      mountPath: /app/backend/data
-      sizeGB: 1
     envVars:
       - key: PROJECT_NAME
         value: Relay
@@ -70,7 +66,7 @@ services:
         value: "0.8"
       - key: TYPESAFE_API_KEY
         sync: false
-      # Recordings on the attached disk; pipeline runs in the API process.
+      # Recordings on the container disk (not persistent on the free plan).
       - key: STORAGE_PROVIDER
         value: local
       - key: STORAGE_LOCAL_DIR
@@ -92,5 +88,5 @@ services:
 databases:
   - name: relay-db
     region: singapore
-    plan: basic-256mb
+    plan: free
     postgresMajorVersion: "18"
