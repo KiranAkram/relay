@@ -20,6 +20,12 @@ FROM python:3.12
 
 ENV PYTHONUNBUFFERED=1
 
+# ffmpeg/ffprobe measure a recording's real length before it is sent to
+# transcription (services/audio.py); without them the client's value is trusted.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
@@ -62,4 +68,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 WORKDIR /app/backend/
 
-CMD ["fastapi", "run", "--workers", "4"]
+# Migrations, admin and demo accounts and the seed census run before the
+# server starts (scripts/prestart.sh). Render passes the port in $PORT.
+# Two workers: the service runs on a small instance, and one instance only
+# while recordings live on an attached disk.
+CMD ["bash", "-c", "bash scripts/prestart.sh && exec fastapi run --workers 2 --port ${PORT:-8000}"]
