@@ -82,7 +82,7 @@ function CensusTable({ includeDischarged }: { includeDischarged: boolean }) {
               <div className="flex justify-end gap-1">
                 <Button asChild variant="outline" size="sm">
                   <Link to="/patients/$patientId" params={{ patientId: p.id }}>
-                    Record
+                    View history
                   </Link>
                 </Button>
                 {admin && <PatientActionsMenu patient={p} />}
