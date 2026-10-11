@@ -1,5 +1,5 @@
 # Render Blueprint for the Relay demo (owner's decisions, 11 Oct 2026):
-# Frankfurt, paid Starter web service with a 1 GB disk so recordings survive
+# Singapore, paid Starter web service with a 1 GB disk so recordings survive
 # deploys (kept for audit, 30-day retention comes with the retention branch),
 # paid Postgres so the database is not expired after 30 days.
 # Secrets are set in the Render dashboard, never here. The service refuses to
@@ -8,7 +8,7 @@ services:
   - type: web
     name: relay
     runtime: docker
-    region: frankfurt
+    region: singapore
     plan: starter
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
@@ -91,6 +91,6 @@ services:
 
 databases:
   - name: relay-db
-    region: frankfurt
+    region: singapore
     plan: basic-256mb
     postgresMajorVersion: "18"
