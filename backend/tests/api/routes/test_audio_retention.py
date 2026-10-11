@@ -125,8 +125,9 @@ def test_purge_removes_old_recordings_and_stamps_every_reference(
     )
     old_id = detail["id"]
     assert len(_docs(db, old_id)) == 3
-    _age(db, old_id, settings.AUDIO_RETENTION_DAYS + 1)
+    # Upload the fresh one before ageing the old one: an upload runs the purge.
     fresh_id = upload(client, normal_user_token_headers).json()["id"]
+    _age(db, old_id, settings.AUDIO_RETENTION_DAYS + 1)
     _age(db, fresh_id, settings.AUDIO_RETENTION_DAYS - 1)
     old_key = db.get(Handover, uuid.UUID(old_id)).audio_key  # type: ignore[union-attr]
 
