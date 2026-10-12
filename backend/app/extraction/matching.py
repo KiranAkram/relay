@@ -25,6 +25,7 @@ NAME_THRESHOLD = 0.85
 
 _HONORIFICS = frozenset(
     {"mr", "mrs", "ms", "miss", "mister", "mx", "dr", "doctor", "sir", "madam"}
+    | {"sahab", "sahib", "ji"}  # Urdu, after the name: "Abbas sahab"
 )
 # "CCU-7", "Bed 7", "7" all reduce to "7"; "7A" stays "7a".
 _BED_FROM_FIRST_DIGIT = re.compile(r"^[a-z]*(\d.*)$")

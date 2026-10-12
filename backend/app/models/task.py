@@ -37,6 +37,11 @@ class DueKind(StrEnum):
     unspecified = "unspecified"  # no time given
 
 
+class DueDay(StrEnum):
+    today = "today"  # "this afternoon", "tonight"
+    tomorrow = "tomorrow"  # "tomorrow morning", "kal subah"
+
+
 class Task(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     handover_patient_id: uuid.UUID = Field(
