@@ -52,6 +52,14 @@ def test_name_fuzzy_single_hit_matches() -> None:
     assert 0.85 <= result.candidates[0].score < 1.0
 
 
+def test_urdu_honorific_after_the_name_is_ignored() -> None:
+    result = match_mention(
+        PatientMention(name="Baig sahab", verbatim="Baig sahab"), CENSUS
+    )
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == MIRZA_BAIG.id
+
+
 def test_surname_shared_by_two_patients_is_ambiguous() -> None:
     result = match_mention(PatientMention(name="Mr Khan", verbatim="Mr Khan"), CENSUS)
     assert result.status == MatchStatus.ambiguous

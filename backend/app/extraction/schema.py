@@ -10,7 +10,7 @@ import re
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models import DueKind, IllnessSeverity, TaskPriority
+from app.models import DueDay, DueKind, IllnessSeverity, TaskPriority
 
 _CLOCK_RE = re.compile(r"^(\d{1,2}):(\d{2})$")
 
@@ -29,6 +29,8 @@ class SpokenTime(BaseModel):
     clock_time: str | None = None
     meridiem_stated: bool = False
     relative_minutes: int | None = None
+    # The day as spoken, if any; timing.py applies it to clock times.
+    day: DueDay | None = None
     phrase: str | None = None  # "by 8:30", "in an hour"
 
     @field_validator("clock_time")

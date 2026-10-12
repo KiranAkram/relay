@@ -75,6 +75,7 @@ from app.models.patient import (
 from app.models.patient_location import PatientLocation, PatientLocationPublic
 from app.models.patient_record import PatientRecordCardPublic, PatientRecordPublic
 from app.models.task import (
+    DueDay,
     DueKind,
     Task,
     TaskCancel,
@@ -176,6 +177,7 @@ __all__ = [
     "TaskPublic",
     "TaskStatus",
     "TaskPriority",
+    "DueDay",
     "DueKind",
     "Flag",
     "FlagCategory",

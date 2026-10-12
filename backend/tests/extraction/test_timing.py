@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from app.extraction.schema import SpokenTime
 from app.extraction.timing import resolve_due
-from app.models import DueKind
+from app.models import DueDay, DueKind
 
 TZ = ZoneInfo("Asia/Karachi")  # UTC+5, no DST
 
@@ -83,6 +83,69 @@ def test_clock_more_than_18h_away_needs_review() -> None:
     assert result.due_at == _utc(_pkt(20, 30, day=3))
     assert result.needs_review is True
     assert result.reason is not None
+
+
+def test_tomorrow_without_meridiem_takes_the_morning() -> None:
+    # 22:00, "tomorrow morning at eight" spoken as "at eight tomorrow".
+    spoken = SpokenTime(kind=DueKind.clock, clock_time="08:00", day=DueDay.tomorrow)
+    result = resolve_due(spoken, _pkt(22), TZ)
+    assert result.due_at == _utc(_pkt(8, day=3))
+    assert result.needs_review is False
+
+
+def test_tomorrow_beyond_horizon_still_needs_review() -> None:
+    # 22:00, "five tomorrow afternoon" is 19 h away.
+    spoken = SpokenTime(
+        kind=DueKind.clock,
+        clock_time="17:00",
+        meridiem_stated=True,
+        day=DueDay.tomorrow,
+    )
+    result = resolve_due(spoken, _pkt(22), TZ)
+    assert result.due_at == _utc(_pkt(17, day=3))
+    assert result.needs_review is True
+
+
+def test_tomorrow_said_after_midnight_is_literal_and_flagged() -> None:
+    # 01:00 on a night shift, "tomorrow at eight" may mean this morning; the
+    # literal date is 31 h away, so a person checks it instead of code guessing.
+    spoken = SpokenTime(kind=DueKind.clock, clock_time="08:00", day=DueDay.tomorrow)
+    result = resolve_due(spoken, _pkt(1, day=3), TZ)
+    assert result.due_at == _utc(_pkt(8, day=4))
+    assert result.needs_review is True
+
+
+def test_today_without_meridiem_takes_the_reading_still_ahead() -> None:
+    spoken = SpokenTime(kind=DueKind.clock, clock_time="04:00", day=DueDay.today)
+    result = resolve_due(spoken, _pkt(14), TZ)
+    assert result.due_at == _utc(_pkt(16))
+    assert result.needs_review is False
+
+
+def test_today_already_passed_keeps_time_and_needs_review() -> None:
+    spoken = SpokenTime(
+        kind=DueKind.clock, clock_time="18:00", meridiem_stated=True, day=DueDay.today
+    )
+    result = resolve_due(spoken, _pkt(22), TZ)
+    assert result.due_at == _utc(_pkt(18))
+    assert result.needs_review is True
+    assert result.reason == "time already passed on the day stated"
+
+
+def test_midnight_tonight_is_the_coming_midnight() -> None:
+    spoken = SpokenTime(
+        kind=DueKind.clock, clock_time="00:00", meridiem_stated=True, day=DueDay.today
+    )
+    result = resolve_due(spoken, _pkt(20), TZ)
+    assert result.due_at == _utc(_pkt(0, day=3))
+    assert result.needs_review is False
+
+
+def test_day_is_ignored_without_a_clock_time() -> None:
+    spoken = SpokenTime(day=DueDay.tomorrow, phrase="kal subah")
+    result = resolve_due(spoken, _pkt(14), TZ)
+    assert result.due_at is None
+    assert result.needs_review is False
 
 
 def test_clock_without_time_needs_review() -> None:
