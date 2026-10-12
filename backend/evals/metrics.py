@@ -8,6 +8,12 @@ and a `must_not` list.
 
 `score_run` compares one run with its key and returns counts; `aggregate`
 adds runs up. Counts rather than rates, so repeated runs can be summed.
+
+Actions are paired by description (by due time only when the key has none),
+so a found action with the wrong time counts as a wrong time, not as missing.
+"Due correct" is what reaches the dashboard (kind of time and resolved
+due_at); the exact spoken parts (day, am/pm, clock) are counted separately.
+Neither that count nor text missing from the transcript decides a pass.
 """
 
 import difflib
@@ -19,17 +25,10 @@ from typing import Any
 
 # Owner's value (12 Oct): two descriptions name the same action at or above it.
 DESCRIPTION_MIN_RATIO = 0.6
+SPOKEN_FIELDS = ("clock_time", "meridiem_stated", "relative_minutes", "day")
 # The prompt lets the model drop these when it copies the transcript.
 FILLERS = frozenset({"um", "umm", "uh", "er", "erm", "ah", "eh", "yeah"})
 _TITLES = frozenset({"mr", "mrs", "ms", "miss", "dr", "sahab", "sahib", "ji"})
-DUE_FIELDS = (
-    "due_kind",
-    "clock_time",
-    "meridiem_stated",
-    "relative_minutes",
-    "day",
-    "due_at",
-)
 COUNTS = (
     "patients_expected",
     "patients_found",
@@ -42,6 +41,7 @@ COUNTS = (
     "actions_found",
     "actions_extra",
     "due_correct",
+    "spoken_time_exact",
     "priority_correct",
     "hallucinations",
     "duplicates",
@@ -57,6 +57,7 @@ RATES = {
     "pending_accuracy": ("pending_correct", "patients_found"),
     "action_recall": ("actions_found", "actions_expected"),
     "due_accuracy": ("due_correct", "actions_found"),
+    "spoken_time_accuracy": ("spoken_time_exact", "actions_found"),
     "priority_accuracy": ("priority_correct", "actions_found"),
 }
 
@@ -68,6 +69,8 @@ class RunScore:
 
     @property
     def passed(self) -> bool:
+        """Every clinical count perfect. Text not copied word for word and
+        spoken time parts are reported but do not fail a run (owner, 12 Oct)."""
         c = self.counts
         found, actions = c["patients_found"], c["actions_found"]
         return (
@@ -84,7 +87,6 @@ class RunScore:
                 for k in (
                     "patients_extra",
                     "actions_extra",
-                    "hallucinations",
                     "duplicates",
                     "must_not_violations",
                     "errors",
@@ -172,7 +174,9 @@ def score_run(
             words = normalise(text)
             if words and f" {words} " not in spoken:
                 c["hallucinations"] += 1
-                diffs.append(f"{_label(a)}: text not in transcript: {text!r}")
+                diffs.append(
+                    f"{_label(a)}: text not in transcript (not in pass): {text!r}"
+                )
 
     extra = [a for j, a in enumerate(actual) if j not in paired_actual]
     for rule in key.get("must_not", []):
@@ -211,26 +215,28 @@ def pair_cards(
 def pair_actions(
     expected: list[dict[str, Any]], actual: list[dict[str, Any]]
 ) -> list[tuple[int, int]]:
-    """Same due_at (both empty counts) and, when the key has one, a close
-    enough description; the closest description wins."""
-    pairs: list[tuple[int, int]] = []
-    used: set[int] = set()
+    """One-to-one, best first. With a key description: score at least
+    DESCRIPTION_MIN_RATIO, the same due time breaking ties. Without one (the
+    public cases): the same due time (both empty counts)."""
+    candidates: list[tuple[float, bool, int, int]] = []
     for i, e in enumerate(expected):
-        best, best_ratio = None, -1.0
         for j, a in enumerate(actual):
-            if j in used or not _same("due_at", e.get("due_at"), a.get("due_at")):
-                continue
-            ratio = 1.0
+            same_due = _same_due_at(e.get("due_at"), a.get("due_at"))
             if e.get("description"):
-                ratio = description_ratio(e["description"], a["description"])
-                if ratio < DESCRIPTION_MIN_RATIO:
-                    continue
-            if ratio > best_ratio:
-                best, best_ratio = j, ratio
-        if best is not None:
-            used.add(best)
-            pairs.append((i, best))
-    return pairs
+                score = description_score(e["description"], a["description"])
+                if score >= DESCRIPTION_MIN_RATIO:
+                    candidates.append((score, same_due, i, j))
+            elif same_due:
+                candidates.append((1.0, True, i, j))
+    pairs: list[tuple[int, int]] = []
+    used_e: set[int] = set()
+    used_a: set[int] = set()
+    for _, _, i, j in sorted(candidates, key=lambda c: (-c[0], not c[1], c[2], c[3])):
+        if i not in used_e and j not in used_a:
+            pairs.append((i, j))
+            used_e.add(i)
+            used_a.add(j)
+    return sorted(pairs)
 
 
 def must_not_hits(
@@ -321,8 +327,14 @@ def normalise(text: str) -> str:
     return " ".join(w for w in _words(text) if w not in FILLERS)
 
 
-def description_ratio(a: str, b: str) -> float:
-    return difflib.SequenceMatcher(None, normalise(a), normalise(b)).ratio()
+def description_score(expected: str, actual: str) -> float:
+    """The higher of character similarity and the share of the key's words
+    found in the output, so a short key ("ECG") still pairs with "ECG at ten"."""
+    want, got = normalise(expected), normalise(actual)
+    similarity = difflib.SequenceMatcher(None, want, got).ratio()
+    key_words = set(want.split())
+    shared = len(key_words & set(got.split())) / len(key_words) if key_words else 0.0
+    return max(similarity, shared)
 
 
 def _score_card(e: dict[str, Any], a: dict[str, Any], score: RunScore) -> None:
@@ -354,14 +366,23 @@ def _score_card(e: dict[str, Any], a: dict[str, Any], score: RunScore) -> None:
     for i, j in pairs:
         want, got = expected[i], actual[j]
         what = _action_label(want)
-        wrong = [f for f in DUE_FIELDS if not _same(f, want.get(f), got.get(f))]
-        if wrong:
-            detail = ", ".join(
-                f"{f} {got.get(f)!r} expected {want.get(f)!r}" for f in wrong
-            )
-            diffs.append(f"{label}: {what}: {detail}")
-        else:
+        if want["due_kind"] == got["due_kind"] and _same_due_at(
+            want.get("due_at"), got.get("due_at")
+        ):
             c["due_correct"] += 1
+        else:
+            diffs.append(
+                f"{label}: {what}: due {got['due_kind']} {got.get('due_at')}, "
+                f"expected {want['due_kind']} {want.get('due_at')}"
+            )
+        spoken = [f for f in SPOKEN_FIELDS if want.get(f) != got.get(f)]
+        if spoken:
+            detail = ", ".join(
+                f"{f} {got.get(f)!r} expected {want.get(f)!r}" for f in spoken
+            )
+            diffs.append(f"{label}: {what}: spoken time (not in pass): {detail}")
+        else:
+            c["spoken_time_exact"] += 1
         if want["priority"] == got["priority"]:
             c["priority_correct"] += 1
         else:
@@ -376,10 +397,10 @@ def _score_card(e: dict[str, Any], a: dict[str, Any], score: RunScore) -> None:
             diffs.append(f"{label}: extra action: {_action_label(got)}")
 
 
-def _same(key: str, expected: Any, actual: Any) -> bool:
-    if key == "due_at" and expected and actual:
+def _same_due_at(expected: str | None, actual: str | None) -> bool:
+    if expected and actual:
         return datetime.fromisoformat(expected) == datetime.fromisoformat(actual)
-    return bool(expected == actual)
+    return expected == actual
 
 
 def _label(card: dict[str, Any]) -> str:

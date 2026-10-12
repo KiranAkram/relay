@@ -9,15 +9,19 @@ A case is either a directory `<name>/` holding `transcript.txt` and
 `expected.json` (evals/cases, the default) or a flat `<name>.expected.json`
 whose transcript is the key's `transcript_file`, else `<name>.transcript.txt`,
 else `<name>.txt` (the private scripts). Every model x prompt version is one
-configuration; each case runs `--repeat` times per configuration. Raw outputs
-go to evals/out/<model>_<prompt>/<case>.<run>.json; the tables are printed and
-written to evals/out/summary.md, summary.json and report.html (open it in a
-browser). A report, not a gate: the exit code is 0 whatever the scores.
+configuration; each case runs `--repeat` times per configuration. Each
+invocation writes to its own folder evals/out/<UTC time>/: raw outputs in
+<model>_<prompt>/<case>.<run>.json, and summary.md, summary.json and
+report.html (open it in a browser). The header records the git commit,
+reasoning effort and a fingerprint of each prompt. A report, not a gate: the
+exit code is 0 whatever the scores.
 Run locally with your own OPENAI_API_KEY; this is not part of CI.
 """
 
 import argparse
+import hashlib
 import json
+import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -25,7 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import settings
-from app.extraction.extractor import get_extractor
+from app.extraction.extractor import REASONING_EFFORT, get_extractor
 from app.extraction.prompt import PROMPTS
 from app.extraction.run import census_from_seed, resolve_cards
 from evals.metrics import RunScore, aggregate, score_run, view_card
@@ -70,7 +74,12 @@ def _flat_transcript(root: Path, name: str, key: dict[str, Any]) -> str:
 
 
 def run_configuration(
-    model: str, prompt_version: str, provider: str, cases: list[Case], repeat: int
+    model: str,
+    prompt_version: str,
+    provider: str,
+    cases: list[Case],
+    repeat: int,
+    out_root: Path,
 ) -> dict[str, list[RunScore]]:
     active = settings.model_copy(
         update={
@@ -81,7 +90,7 @@ def run_configuration(
     )
     extractor = get_extractor(active)
     census = census_from_seed()
-    out_dir = OUT_DIR / f"{model}_{prompt_version}"
+    out_dir = out_root / f"{model}_{prompt_version}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     scores: dict[str, list[RunScore]] = {}
@@ -93,11 +102,13 @@ def run_configuration(
             error = None
             try:
                 extraction = extractor.extract(case.transcript)
+            except Exception as exc:  # one failed model call must not end the run
+                error = f"{type(exc).__name__}: {exc}"
+            else:
+                # Our own timing and matching code: a bug here must stop the run.
                 resolved = resolve_cards(
                     extraction, recorded_at, census, settings.hospital_tz
                 )
-            except Exception as exc:  # one failed call must not end the run
-                error = f"{type(exc).__name__}: {exc}"
             (out_dir / f"{case.name}.{run}.json").write_text(
                 json.dumps(
                     {
@@ -123,15 +134,42 @@ def run_configuration(
     return scores
 
 
+def git_commit() -> str:
+    """Short commit of the code under test, marked when the tree has changes."""
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return f"{commit} + uncommitted changes" if dirty else commit
+
+
+def prompt_fingerprint(version: str) -> str:
+    return hashlib.sha256(PROMPTS[version].encode()).hexdigest()[:12]
+
+
 def build_summary(
     provider: str,
     repeat: int,
     cases: list[Case],
     results: dict[tuple[str, str], dict[str, list[RunScore]]],
+    commit: str,
 ) -> dict[str, Any]:
     return {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "provider": provider,
+        "git_commit": commit,
+        "reasoning_effort": REASONING_EFFORT,
         "repeat": repeat,
         "cases": [case.name for case in cases],
         "configurations": [
@@ -139,6 +177,7 @@ def build_summary(
                 "name": f"{model} + {prompt_version}",
                 "model": model,
                 "prompt_version": prompt_version,
+                "prompt_fingerprint": prompt_fingerprint(prompt_version),
                 "aggregate": aggregate(scores),
                 "cases": {
                     name: {
@@ -200,19 +239,23 @@ def main(argv: list[str] | None = None) -> int:
             f"version(s) x {len(cases)} case(s) x {args.repeat} repeat(s)\n"
         )
 
+    commit = git_commit()
+    out_root = OUT_DIR / datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
+    out_root.mkdir(parents=True)
     results = {
-        (model, prompt): run_configuration(model, prompt, provider, cases, args.repeat)
+        (model, prompt): run_configuration(
+            model, prompt, provider, cases, args.repeat, out_root
+        )
         for model in models
         for prompt in prompts
     }
-    summary = build_summary(provider, args.repeat, cases, results)
+    summary = build_summary(provider, args.repeat, cases, results, commit)
     markdown = render_markdown(summary)
     print("\n" + markdown)
 
-    OUT_DIR.mkdir(exist_ok=True)
-    (OUT_DIR / "summary.md").write_text(markdown)
-    (OUT_DIR / "summary.json").write_text(json.dumps(summary, indent=2))
-    report = OUT_DIR / "report.html"
+    (out_root / "summary.md").write_text(markdown)
+    (out_root / "summary.json").write_text(json.dumps(summary, indent=2))
+    report = out_root / "report.html"
     report.write_text(render_html(summary, {c.name: c.transcript for c in cases}))
     print(f"Report: {report}")
     return 0

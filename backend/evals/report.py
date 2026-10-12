@@ -17,11 +17,19 @@ CONFIG_ROWS: list[tuple[str, tuple[str, ...]]] = [
     ("Extra action items", ("total", "actions_extra")),
     ("Due time correct", ("rate", "due_correct", "actions_found")),
     ("Priority correct", ("rate", "priority_correct", "actions_found")),
-    ("Text not in transcript", ("total", "hallucinations")),
+    (
+        "Spoken time parts exact (not in pass)",
+        ("rate", "spoken_time_exact", "actions_found"),
+    ),
+    ("Text not in transcript (not in pass)", ("total", "hallucinations")),
     ("Duplicate cards", ("total", "duplicates")),
     ("Must-not breaches", ("total", "must_not_violations")),
     ("Failed model calls", ("total", "errors")),
 ]
+PASS_RULE = (
+    "A run passes when every clinical count is perfect; rows marked "
+    "(not in pass) are reported only."
+)
 SCRIPT_COLUMNS: list[tuple[str, tuple[str, ...]]] = [
     ("Patients found", ("rate", "patients_found", "patients_expected")),
     ("Extra cards", ("total", "patients_extra")),
@@ -38,8 +46,9 @@ def render_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# Extraction evaluation",
         "",
-        f"{summary['generated_at']} · provider {summary['provider']} · "
-        f"{len(summary['cases'])} cases × {summary['repeat']} repeats",
+        _meta(summary),
+        "",
+        PASS_RULE,
         "",
         "## Configurations",
         "",
@@ -154,9 +163,8 @@ pre {{ white-space: pre-wrap; color: var(--muted); }}
 </head>
 <body>
 <h1>Extraction evaluation</h1>
-<p class="meta">{_e(summary["generated_at"])} · provider {_e(summary["provider"])} ·
-{len(summary["cases"])} cases × {summary["repeat"]} repeats.
-A run passes only when every count is perfect.</p>
+<p class="meta">{_e(_meta(summary))}</p>
+<p class="meta">{_e(PASS_RULE)}</p>
 <h2>Configurations</h2>
 <div class="scroll"><table><thead><tr><th>Metric</th>{head}</tr></thead>
 <tbody>{config_rows}</tbody></table></div>
@@ -171,8 +179,18 @@ A run passes only when every count is perfect.</p>
 """
 
 
+def _meta(summary: dict[str, Any]) -> str:
+    return (
+        f"{summary['generated_at']} · provider {summary['provider']} · "
+        f"commit {summary['git_commit']} · reasoning effort "
+        f"{summary['reasoning_effort']} · {len(summary['cases'])} cases × "
+        f"{summary['repeat']} repeats"
+    )
+
+
 def _config_table(configs: list[dict[str, Any]]) -> list[tuple[str, list[str]]]:
     rows: list[tuple[str, list[str]]] = [
+        ("Prompt fingerprint", [c["prompt_fingerprint"] for c in configs]),
         (
             "Runs passed",
             [
