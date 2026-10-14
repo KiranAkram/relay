@@ -634,6 +634,10 @@ export type MatchCandidatePublic = {
      */
     score: number;
     /**
+     * Name Note
+     */
+    name_note?: string | null;
+    /**
      * Family Name
      */
     family_name?: string | null;

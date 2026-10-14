@@ -42,14 +42,20 @@ def test_mrn_exact_matches() -> None:
     assert result.patient_id == SANA_QURESHI.id
 
 
-def test_name_fuzzy_single_hit_matches() -> None:
+def test_exact_name_without_bed_matches() -> None:
     result = match_mention(
-        PatientMention(name="Mr. Kureshi", verbatim="Mr. Kureshi"), CENSUS
+        PatientMention(name="Mrs. Qureshi", verbatim="Mrs. Qureshi"), CENSUS
     )
     assert result.status == MatchStatus.matched
     assert result.patient_id == SANA_QURESHI.id
-    assert result.candidates[0].reason == "name fuzzy"
-    assert 0.85 <= result.candidates[0].score < 1.0
+    assert result.candidates[0].reason == "name exact"
+
+
+def test_misheard_name_without_bed_is_unmatched() -> None:
+    result = match_mention(
+        PatientMention(name="Mr. Kureshi", verbatim="Mr. Kureshi"), CENSUS
+    )
+    assert result.status == MatchStatus.unmatched
 
 
 def test_urdu_honorific_after_the_name_is_ignored() -> None:
@@ -83,25 +89,38 @@ def test_unknown_name_is_unmatched() -> None:
     assert result.candidates == []
 
 
-def test_bed_and_name_agreeing_is_matched_with_both_reasons() -> None:
+def test_bed_and_name_agreeing_is_matched_without_a_note() -> None:
     mention = PatientMention(bed="7", name="Mr Baig", verbatim="Bed 7, Mr Baig")
     result = match_mention(mention, CENSUS)
     assert result.status == MatchStatus.matched
     assert result.patient_id == MIRZA_BAIG.id
-    assert result.candidates[0].reason == "bed exact, name fuzzy"
+    assert result.candidates[0].reason == "bed exact"
+    assert result.candidates[0].name_note is None
 
 
-def test_bed_and_name_disagreeing_is_ambiguous_bed_patient_first() -> None:
+def test_bed_decides_when_the_name_is_another_patients() -> None:
     mention = PatientMention(bed="7", name="Mr Khan", verbatim="Bed 7, Mr Khan")
     result = match_mention(mention, CENSUS)
-    assert result.status == MatchStatus.ambiguous
-    assert result.patient_id is None
-    assert result.candidates[0].patient_id == MIRZA_BAIG.id
-    assert result.candidates[0].reason == "bed exact"
-    assert {c.patient_id for c in result.candidates[1:]} == {
-        IMRAN_KHAN.id,
-        ZUBAIDA_KHAN.id,
-    }
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == MIRZA_BAIG.id
+    assert [c.patient_id for c in result.candidates] == [MIRZA_BAIG.id]
+    assert result.candidates[0].name_note == "Transcript says “Mr Khan”"
+
+
+def test_name_said_two_ways_gets_no_note() -> None:
+    mention = PatientMention(
+        bed="8", name="Mrs Khan, Zubaida Khan", verbatim="Bed eight, Mrs Khan"
+    )
+    result = match_mention(mention, CENSUS)
+    assert result.patient_id == ZUBAIDA_KHAN.id
+    assert result.candidates[0].name_note is None
+
+
+def test_name_said_two_ways_without_bed_matches_exactly_one() -> None:
+    mention = PatientMention(name="Mrs Khan, Zubaida Khan", verbatim="Mrs Khan")
+    result = match_mention(mention, CENSUS)
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == ZUBAIDA_KHAN.id
 
 
 TARIQ_SHEIKH = _patient("MRN-100005", "Tariq", "Sheikh", "CCU-5")
@@ -111,11 +130,14 @@ WIDER_CENSUS = [*CENSUS, TARIQ_SHEIKH, YUSUF_SHEIKH, KAMRAN_MIRZA]
 
 
 def test_bed_decides_when_surname_is_shared() -> None:
-    mention = PatientMention(bed="5", name="Sheikh", verbatim="the Sheikh in bed five")
+    mention = PatientMention(
+        bed="5", name="the Sheikh", verbatim="the Sheikh in bed five"
+    )
     result = match_mention(mention, WIDER_CENSUS)
     assert result.status == MatchStatus.matched
     assert result.patient_id == TARIQ_SHEIKH.id
-    assert [c.reason for c in result.candidates] == ["bed exact, name fuzzy"]
+    assert [c.reason for c in result.candidates] == ["bed exact"]
+    assert result.candidates[0].name_note is None
 
 
 def test_bed_decides_when_name_is_another_patients_given_name() -> None:
@@ -136,18 +158,33 @@ def test_shared_surname_without_bed_stays_ambiguous() -> None:
     }
 
 
-def test_bed_not_on_census_falls_back_to_name_as_ambiguous() -> None:
+def test_bed_not_on_census_falls_back_to_exact_name() -> None:
     mention = PatientMention(bed="30", name="Mr Baig", verbatim="bed thirty, Mr Baig")
     result = match_mention(mention, CENSUS)
-    assert result.status == MatchStatus.ambiguous
-    assert [c.patient_id for c in result.candidates] == [MIRZA_BAIG.id]
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == MIRZA_BAIG.id
+    assert result.candidates[0].reason == "name exact"
 
 
-def test_bed_hit_with_unknown_name_is_ambiguous_not_silently_matched() -> None:
-    mention = PatientMention(bed="7", name="Mr Smith", verbatim="Bed 7, Mr Smith")
+def test_bed_not_on_census_and_shared_name_is_ambiguous() -> None:
+    mention = PatientMention(bed="30", name="Mr Khan", verbatim="bed thirty, Mr Khan")
     result = match_mention(mention, CENSUS)
     assert result.status == MatchStatus.ambiguous
-    assert [c.patient_id for c in result.candidates] == [MIRZA_BAIG.id]
+    assert {c.patient_id for c in result.candidates} == {IMRAN_KHAN.id, ZUBAIDA_KHAN.id}
+
+
+def test_bed_not_on_census_and_unknown_name_is_unmatched() -> None:
+    mention = PatientMention(bed="30", name="Mr Smith", verbatim="bed thirty, Mr Smith")
+    result = match_mention(mention, CENSUS)
+    assert result.status == MatchStatus.unmatched
+
+
+def test_bed_decides_over_an_unknown_name_with_a_note() -> None:
+    mention = PatientMention(bed="7", name="Mr Smith", verbatim="Bed 7, Mr Smith")
+    result = match_mention(mention, CENSUS)
+    assert result.status == MatchStatus.matched
+    assert result.patient_id == MIRZA_BAIG.id
+    assert result.candidates[0].name_note == "Transcript says “Mr Smith”"
 
 
 def test_mention_without_cues_is_unmatched() -> None:
@@ -161,5 +198,10 @@ def test_candidates_serialise_for_jsonb_column() -> None:
     result = match_mention(PatientMention(bed="7", verbatim="Bed 7"), CENSUS)
     dumped = [c.model_dump(mode="json") for c in result.candidates]
     assert dumped == [
-        {"patient_id": str(MIRZA_BAIG.id), "reason": "bed exact", "score": 1.0}
+        {
+            "patient_id": str(MIRZA_BAIG.id),
+            "reason": "bed exact",
+            "score": 1.0,
+            "name_note": None,
+        }
     ]

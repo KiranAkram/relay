@@ -5,7 +5,7 @@
 without a key (`LLM_PROVIDER=fake`, the CI default).
 """
 
-from typing import Protocol
+from typing import Final, Protocol
 
 from openai import OpenAI
 
@@ -21,6 +21,10 @@ from app.extraction.schema import (
     SpokenTime,
 )
 from app.models import DueKind, IllnessSeverity, TaskPriority
+
+# Reasoning models reject `temperature`; low effort is enough for copying
+# structure out of a transcript. Recorded in evaluation reports.
+REASONING_EFFORT: Final = "low"
 
 
 class ExtractionError(Exception):
@@ -109,9 +113,7 @@ class OpenAIExtractor:
             instructions=self._instructions,
             input=user_message(transcript),
             text_format=HandoverExtraction,
-            # Reasoning models reject `temperature`; low effort is enough for
-            # copying structure out of a transcript.
-            reasoning={"effort": "low"},
+            reasoning={"effort": REASONING_EFFORT},
         )
         parsed = response.output_parsed
         if parsed is None:
