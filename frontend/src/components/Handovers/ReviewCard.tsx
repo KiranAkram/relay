@@ -137,6 +137,9 @@ export function ReviewCard({ handoverId, card, readOnly }: ReviewCardProps) {
   const matched = card.match_candidates.find(
     (c) => c.patient_id === card.patient_id,
   )
+  // The bed decided but the transcript named someone else.
+  const nameNote =
+    card.match_status === "matched" && matched?.name_note ? matched : null
 
   return (
     <Card className={unresolved ? "border-amber-500/70" : undefined}>
@@ -173,11 +176,31 @@ export function ReviewCard({ handoverId, card, readOnly }: ReviewCardProps) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-5">
+        {nameNote && (
+          <div className="flex flex-col gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <p>
+              {nameNote.name_note}; bed {nameNote.bed ?? "?"} is{" "}
+              {nameNote.given_name} {nameNote.family_name}.
+              {!readOnly &&
+                " If that is the wrong patient, choose the right one:"}
+            </p>
+            {!readOnly && (
+              <CensusPicker
+                disabled={save.isPending}
+                onPick={(patientId) => save.mutate({ patient_id: patientId })}
+              />
+            )}
+          </div>
+        )}
+
         {unresolved && !readOnly && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
             {card.match_status === "ambiguous" ? (
               <div className="flex flex-col gap-2">
-                <p>Several patients fit this mention. Pick one:</p>
+                <p>
+                  More than one patient has this name and no bed on the census
+                  was said. Check the name and bed, then pick the patient:
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {card.match_candidates.map((c) => (
                     <Button
@@ -199,8 +222,9 @@ export function ReviewCard({ handoverId, card, readOnly }: ReviewCardProps) {
             ) : (
               <div className="flex flex-col gap-2">
                 <p>
-                  Nobody on the census matched this mention. Choose the patient
-                  it belongs to, or remove the card.
+                  No patient on the census has this bed or name. Check the name
+                  and bed, then choose the patient it belongs to, or remove the
+                  card.
                 </p>
                 <CensusPicker
                   disabled={save.isPending}

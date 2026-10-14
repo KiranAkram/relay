@@ -22,6 +22,10 @@ CONFIG_ROWS: list[tuple[str, tuple[str, ...]]] = [
         ("rate", "spoken_time_exact", "actions_found"),
     ),
     ("Text not in transcript (not in pass)", ("total", "hallucinations")),
+    (
+        "Cards with a missing and an extra action, check wording (not in pass)",
+        ("total", "wording_check"),
+    ),
     ("Duplicate cards", ("total", "duplicates")),
     ("Must-not breaches", ("total", "must_not_violations")),
     ("Failed model calls", ("total", "errors")),
@@ -180,11 +184,16 @@ pre {{ white-space: pre-wrap; color: var(--muted); }}
 
 
 def _meta(summary: dict[str, Any]) -> str:
+    source = summary.get("rescored_from")
+    runs = (
+        f"saved outputs re-scored from {', '.join(source)}"
+        if source
+        else f"provider {summary['provider']} · {summary['repeat']} repeats"
+    )
     return (
-        f"{summary['generated_at']} · provider {summary['provider']} · "
-        f"commit {summary['git_commit']} · reasoning effort "
-        f"{summary['reasoning_effort']} · {len(summary['cases'])} cases × "
-        f"{summary['repeat']} repeats"
+        f"{summary['generated_at']} · {runs} · commit {summary['git_commit']} · "
+        f"reasoning effort {summary['reasoning_effort']} · "
+        f"{len(summary['cases'])} cases"
     )
 
 

@@ -119,6 +119,50 @@ def test_short_key_description_pairs_with_a_longer_one() -> None:
     assert pair_actions(hold, [_action(description="give enoxaparin")]) == []
 
 
+@pytest.mark.parametrize(
+    ("key", "output"),
+    [
+        ("hourly observations", "perform hourly obs"),
+        ("send vancomycin level", "send vanc level"),
+        ("send APTT", "repeat APTT"),
+        ("send APTT", "Check next APTT"),
+        ("send bloods", "take bloods, full set"),
+        ("repeat ECG", "do an ECG"),
+        ("give metoprolol", "ensure metoprolol given"),
+        ("write discharge letter", "complete discharge letter"),
+        ("give metoprolol 20", "give twenty of metoprolol"),
+        ("give potassium 50", "give fifty of potassium over an hour"),
+        ("give metoprolol 25", "give twenty-five of metoprolol"),
+    ],
+)
+def test_same_job_in_other_words_pairs(key: str, output: str) -> None:
+    assert pair_actions([_action(description=key)], [_action(description=output)]) == [
+        (0, 0)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("key", "output"),
+    [
+        ("hold enoxaparin tonight", "give enoxaparin"),
+        ("check potassium", "give potassium at eleven"),
+        ("repeat echo", "repeat ECG"),
+        ("chase echo report", "give metoprolol"),
+        ("give metoprolol 20", "give forty of metoprolol"),
+    ],
+)
+def test_different_jobs_do_not_pair(key: str, output: str) -> None:
+    assert pair_actions([_action(description=key)], [_action(description=output)]) == []
+
+
+def test_missing_and_extra_on_one_card_asks_to_check_wording() -> None:
+    other = _card(action_items=[_action(description="repeat U&E")])
+    expected = _card(action_items=[_action(description="repeat renal function")])
+    score = score_run(_key(expected), [other], TRANSCRIPT)
+    assert score.counts["wording_check"] == 1
+    assert any("check wording" in d for d in score.diffs)
+
+
 def test_same_due_time_breaks_a_tie_between_descriptions() -> None:
     expected = [_action(description="ECG")]
     actual = [
@@ -330,3 +374,29 @@ def test_bug_in_our_own_code_stops_the_run(
     case = Case("one", TRANSCRIPT, _key(_card()))
     with pytest.raises(KeyError):
         run_evals.run_configuration("m", "v3", "fake", [case], 1, tmp_path)
+
+
+def _save_run(folder: Path, case_name: str, run: int, raw: dict[str, Any]) -> None:
+    config_dir = folder / f"{raw['model']}_{raw['prompt_version']}"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / f"{case_name}.{run}.json").write_text(json.dumps(raw))
+
+
+def test_rescore_scores_saved_outputs_again(tmp_path: Path) -> None:
+    case = next(c for c in load_cases([CASES_DIR]) if c.name == "demo_bed7")
+    resolved = resolve_cards(
+        DEMO_EXTRACTION,
+        datetime.fromisoformat(case.key["recorded_at"]),
+        census_from_seed(),
+        settings.hospital_tz,
+    )
+    saved = {"model": "m", "prompt_version": "v3", "error": None}
+    _save_run(tmp_path, case.name, 1, saved | {"resolved": resolved})
+    _save_run(tmp_path, case.name, 2, saved | {"error": "Timeout", "resolved": []})
+    _save_run(tmp_path, case.name, 1, saved | {"prompt_version": "v2", "resolved": []})
+
+    results = run_evals.rescore_folder(tmp_path, [case], [], ["v3"])
+    assert list(results) == [("m", "v3")]
+    first, second = results[("m", "v3")][case.name]
+    assert first.passed
+    assert second.counts["errors"] == 1

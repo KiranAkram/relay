@@ -9,14 +9,15 @@ and a `must_not` list.
 `score_run` compares one run with its key and returns counts; `aggregate`
 adds runs up. Counts rather than rates, so repeated runs can be summed.
 
-Actions are paired by description (by due time only when the key has none),
-so a found action with the wrong time counts as a wrong time, not as missing.
+Actions are paired by description (by due time only when the key has none):
+the share of the key's content words found in the output, verbs of the same
+kind interchangeable, short forms allowed ("obs" = "observations"). So a
+found action with the wrong time counts as a wrong time, not as missing.
 "Due correct" is what reaches the dashboard (kind of time and resolved
 due_at); the exact spoken parts (day, am/pm, clock) are counted separately.
 Neither that count nor text missing from the transcript decides a pass.
 """
 
-import difflib
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -29,6 +30,101 @@ SPOKEN_FIELDS = ("clock_time", "meridiem_stated", "relative_minutes", "day")
 # The prompt lets the model drop these when it copies the transcript.
 FILLERS = frozenset({"um", "umm", "uh", "er", "erm", "ah", "eh", "yeah"})
 _TITLES = frozenset({"mr", "mrs", "ms", "miss", "dr", "sahab", "sahib", "ji"})
+# What kind of job a description's verb names. Two descriptions whose verbs
+# fall in different kinds never pair ("hold enoxaparin" is not "give
+# enoxaparin", "check potassium" is not "give potassium"); verbs of the same
+# kind are interchangeable ("send APTT" = "repeat APTT").
+_VERB_KINDS = {
+    **dict.fromkeys(
+        (
+            "send",
+            "sent",
+            "repeat",
+            "repeated",
+            "check",
+            "checked",
+            "recheck",
+            "rechecked",
+            "do",
+            "done",
+            "perform",
+            "take",
+            "taken",
+            "get",
+            "order",
+            "review",
+            "monitor",
+            "maintain",
+            "measure",
+            "arrange",
+            "complete",
+            "write",
+            "obtain",
+            "draw",
+            "inspect",
+            "assess",
+            "examine",
+            "look",
+        ),
+        "do",
+    ),
+    **dict.fromkeys(("give", "given", "giving", "administer"), "give"),
+    **dict.fromkeys(("hold", "held", "holding", "withhold", "omit"), "hold"),
+    **dict.fromkeys(("start", "started", "commence", "restart"), "start"),
+    **dict.fromkeys(("stop", "stopped", "discontinue"), "stop"),
+    **dict.fromkeys(("call", "phone", "ring", "contact"), "call"),
+    **dict.fromkeys(("chase", "chased"), "chase"),
+}
+# Number words count as their digits ("twenty" = "20", "twenty-five" = "25").
+_UNITS: dict[str, int] = {
+    w: i
+    for i, w in enumerate(
+        (
+            "zero one two three four five six seven eight nine ten eleven twelve "
+            "thirteen fourteen fifteen sixteen seventeen eighteen nineteen"
+        ).split()
+    )
+}
+_TENS: dict[str, int] = {
+    w: 10 * i
+    for i, w in enumerate(
+        "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
+    )
+    if w != "_"
+}
+# Words that never tell two jobs apart.
+_FILLER_WORDS = frozenset(
+    {
+        "ensure",
+        "make",
+        "sure",
+        "please",
+        "have",
+        "the",
+        "a",
+        "an",
+        "his",
+        "her",
+        "their",
+        "him",
+        "it",
+        "at",
+        "in",
+        "on",
+        "of",
+        "for",
+        "to",
+        "and",
+        "by",
+        "with",
+        "about",
+        "again",
+        "next",
+        "from",
+        "when",
+        "re",
+    }
+)
 COUNTS = (
     "patients_expected",
     "patients_found",
@@ -42,6 +138,7 @@ COUNTS = (
     "actions_extra",
     "due_correct",
     "spoken_time_exact",
+    "wording_check",
     "priority_correct",
     "hallucinations",
     "duplicates",
@@ -328,13 +425,49 @@ def normalise(text: str) -> str:
 
 
 def description_score(expected: str, actual: str) -> float:
-    """The higher of character similarity and the share of the key's words
-    found in the output, so a short key ("ECG") still pairs with "ECG at ten"."""
-    want, got = normalise(expected), normalise(actual)
-    similarity = difflib.SequenceMatcher(None, want, got).ratio()
-    key_words = set(want.split())
-    shared = len(key_words & set(got.split())) / len(key_words) if key_words else 0.0
-    return max(similarity, shared)
+    """Share of the key's content words found in the output's, 0 when the
+    verbs name different kinds of job. Verbs and filler words are not content;
+    a word matches when one is the start of the other ("obs" = "observations",
+    "vanc" = "vancomycin"), so "ECG" pairs with "repeat ECG at ten"."""
+    want_kinds, want = _job(expected)
+    got_kinds, got = _job(actual)
+    if want_kinds and got_kinds and not want_kinds & got_kinds:
+        return 0.0
+    if not want:
+        return 1.0 if want_kinds and want_kinds & got_kinds else 0.0
+    return sum(any(_same_word(w, g) for g in got) for w in want) / len(want)
+
+
+def _job(description: str) -> tuple[set[str], set[str]]:
+    """(kinds of verb, content words) of an action description."""
+    words = _digits([w for w in _words(description) if w not in FILLERS])
+    kinds = {_VERB_KINDS[w] for w in words if w in _VERB_KINDS}
+    content = {w for w in words if w not in _VERB_KINDS and w not in _FILLER_WORDS}
+    return kinds, content
+
+
+def _digits(words: list[str]) -> list[str]:
+    out: list[str] = []
+    for w in words:
+        if w in _UNITS and out and out[-1] in _TENS_DIGITS and _UNITS[w] < 10:
+            out[-1] = str(int(out[-1]) + _UNITS[w])  # "twenty five" -> 25
+        elif w in _TENS:
+            out.append(str(_TENS[w]))
+        elif w in _UNITS:
+            out.append(str(_UNITS[w]))
+        else:
+            out.append(w)
+    return out
+
+
+_TENS_DIGITS = frozenset(str(v) for v in _TENS.values())
+
+
+def _same_word(a: str, b: str) -> bool:
+    if a == b:
+        return True
+    short, long = sorted((a, b), key=len)
+    return len(short) >= 3 and long.startswith(short)
 
 
 def _score_card(e: dict[str, Any], a: dict[str, Any], score: RunScore) -> None:
@@ -389,12 +522,16 @@ def _score_card(e: dict[str, Any], a: dict[str, Any], score: RunScore) -> None:
             diffs.append(
                 f"{label}: {what}: priority {got['priority']!r}, expected {want['priority']!r}"
             )
-    for i, want in enumerate(expected):
-        if i not in {p[0] for p in pairs}:
-            diffs.append(f"{label}: action missing: {_action_label(want)}")
-    for j, got in enumerate(actual):
-        if j not in {p[1] for p in pairs}:
-            diffs.append(f"{label}: extra action: {_action_label(got)}")
+    missing = [w for i, w in enumerate(expected) if i not in {p[0] for p in pairs}]
+    extra = [g for j, g in enumerate(actual) if j not in {p[1] for p in pairs}]
+    for want in missing:
+        diffs.append(f"{label}: action missing: {_action_label(want)}")
+    for got in extra:
+        diffs.append(f"{label}: extra action: {_action_label(got)}")
+    if missing and extra:
+        # Possibly the same job in other words ("U&E" for "renal function").
+        c["wording_check"] += 1
+        diffs.append(f"{label}: missing and extra action on one card, check wording")
 
 
 def _same_due_at(expected: str | None, actual: str | None) -> bool:

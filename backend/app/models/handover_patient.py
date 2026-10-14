@@ -58,7 +58,7 @@ class HandoverPatient(TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     # Patient matching
     mention_verbatim: str = Field(max_length=255)  # "Bed 7", "Mr. Khan"
     match_status: MatchStatus = Field(sa_type=String(32))  # type: ignore
-    # [{"patient_id": "...", "reason": "bed exact", "score": 1.0}, ...]
+    # [{"patient_id": "...", "reason": "bed exact", "score": 1.0, "name_note": null}]
     match_candidates: list[dict[str, Any]] = Field(default_factory=list, sa_type=JSONB)
 
     # I-PASS content
@@ -90,6 +90,7 @@ class MatchCandidatePublic(SQLModel):
     patient_id: uuid.UUID
     reason: str
     score: float
+    name_note: str | None = None  # bed decided, spoken name differs
     family_name: str | None = None
     given_name: str | None = None
     bed: str | None = None

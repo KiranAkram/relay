@@ -15,6 +15,14 @@ invocation writes to its own folder evals/out/<UTC time>/: raw outputs in
 report.html (open it in a browser). The header records the git commit,
 reasoning effort and a fingerprint of each prompt. A report, not a gate: the
 exit code is 0 whatever the scores.
+
+    uv run python -m evals.run_evals --rescore evals/out/<folder> [...]
+        [--cases DIR ...] [--model M ...] [--prompt-version V ...]
+
+re-scores saved outputs with no model calls: each saved card is matched and
+timed again by the current code and compared with the current keys. Folders
+are repeatable; --model / --prompt-version keep only those configurations.
+The report goes to evals/out/<UTC time>-rescored/.
 Run locally with your own OPENAI_API_KEY; this is not part of CI.
 """
 
@@ -32,6 +40,8 @@ from app.core.config import settings
 from app.extraction.extractor import REASONING_EFFORT, get_extractor
 from app.extraction.prompt import PROMPTS
 from app.extraction.run import census_from_seed, resolve_cards
+from app.extraction.schema import HandoverExtraction
+from app.models import Patient
 from evals.metrics import RunScore, aggregate, score_run, view_card
 from evals.report import render_html, render_markdown
 
@@ -158,16 +168,60 @@ def prompt_fingerprint(version: str) -> str:
     return hashlib.sha256(PROMPTS[version].encode()).hexdigest()[:12]
 
 
+def rescore_folder(
+    folder: Path, cases: list[Case], models: list[str], prompts: list[str]
+) -> dict[tuple[str, str], dict[str, list[RunScore]]]:
+    """Score the saved outputs in one run folder again with the current code."""
+    by_name = {case.name: case for case in cases}
+    census = census_from_seed()
+    results: dict[tuple[str, str], dict[str, list[RunScore]]] = {}
+    for config_dir in sorted(p for p in folder.iterdir() if p.is_dir()):
+        runs: dict[str, list[tuple[int, RunScore]]] = {name: [] for name in by_name}
+        config: tuple[str, str] | None = None
+        for raw_file in sorted(config_dir.glob("*.json")):
+            name, _, run = raw_file.stem.rpartition(".")
+            if name not in by_name:
+                continue
+            raw = json.loads(raw_file.read_text())
+            config = (raw["model"], raw["prompt_version"])
+            runs[name].append((int(run), rescore_run(raw, by_name[name], census)))
+        if config is None:
+            continue
+        if (models and config[0] not in models) or (
+            prompts and config[1] not in prompts
+        ):
+            continue
+        results[config] = {name: [s for _, s in sorted(r)] for name, r in runs.items()}
+    return results
+
+
+def rescore_run(raw: dict[str, Any], case: Case, census: list[Patient]) -> RunScore:
+    if raw.get("error"):
+        return score_run(case.key, [], case.transcript, raw["error"])
+    extraction = HandoverExtraction.model_validate(
+        {"patients": [r["card"] for r in raw["resolved"]]}
+    )
+    resolved = resolve_cards(
+        extraction,
+        datetime.fromisoformat(case.key["recorded_at"]),
+        census,
+        settings.hospital_tz,
+    )
+    return score_run(case.key, [view_card(r) for r in resolved], case.transcript)
+
+
 def build_summary(
     provider: str,
     repeat: int,
     cases: list[Case],
     results: dict[tuple[str, str], dict[str, list[RunScore]]],
     commit: str,
+    rescored_from: list[str] | None = None,
 ) -> dict[str, Any]:
     return {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "provider": provider,
+        "rescored_from": rescored_from,
         "git_commit": commit,
         "reasoning_effort": REASONING_EFFORT,
         "repeat": repeat,
@@ -213,6 +267,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", action="append", help="repeatable")
     parser.add_argument("--prompt-version", action="append", help="repeatable")
     parser.add_argument("--provider", choices=["fake", "openai"], default=None)
+    parser.add_argument(
+        "--rescore",
+        type=Path,
+        action="append",
+        help="saved run folder to score again, no model calls (repeatable)",
+    )
     args = parser.parse_args(argv)
 
     cases = load_cases(args.cases or [CASES_DIR])
@@ -224,6 +284,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.repeat < 1:
         print("--repeat must be at least 1")
         return 2
+    if args.rescore:
+        return rescore(args, cases)
     models: list[str] = args.model or [settings.LLM_MODEL]
     prompts: list[str] = args.prompt_version or [settings.EXTRACTION_PROMPT_VERSION]
     unknown = [p for p in prompts if p not in PROMPTS]
@@ -253,6 +315,41 @@ def main(argv: list[str] | None = None) -> int:
     markdown = render_markdown(summary)
     print("\n" + markdown)
 
+    (out_root / "summary.md").write_text(markdown)
+    (out_root / "summary.json").write_text(json.dumps(summary, indent=2))
+    report = out_root / "report.html"
+    report.write_text(render_html(summary, {c.name: c.transcript for c in cases}))
+    print(f"Report: {report}")
+    return 0
+
+
+def rescore(args: argparse.Namespace, cases: list[Case]) -> int:
+    results: dict[tuple[str, str], dict[str, list[RunScore]]] = {}
+    for folder in args.rescore:
+        found = rescore_folder(
+            folder, cases, args.model or [], args.prompt_version or []
+        )
+        for config, scores in found.items():
+            if config in results:
+                print(f"{config[0]} + {config[1]} is in more than one folder")
+                return 2
+            results[config] = scores
+    if not results:
+        print("no saved outputs found for the cases and configurations asked for")
+        return 2
+    repeat = max(len(r) for s in results.values() for r in s.values())
+    summary = build_summary(
+        "saved outputs",
+        repeat,
+        cases,
+        results,
+        git_commit(),
+        rescored_from=[str(folder) for folder in args.rescore],
+    )
+    markdown = render_markdown(summary)
+    print(markdown)
+    out_root = OUT_DIR / f"{datetime.now(UTC).strftime('%Y%m%d-%H%M%SZ')}-rescored"
+    out_root.mkdir(parents=True)
     (out_root / "summary.md").write_text(markdown)
     (out_root / "summary.json").write_text(json.dumps(summary, indent=2))
     report = out_root / "report.html"
